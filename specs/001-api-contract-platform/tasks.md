@@ -87,21 +87,21 @@ Based on plan.md structure:
 
 ### Server Actions for US1
 
-- [ ] T026 [US1] Create `listContracts` Server Action in `src/actions/contracts.ts`
-- [ ] T027 [US1] Create `getContract` Server Action in `src/actions/contracts.ts`
+- [x] T026 [US1] Create `listContracts` Server Action in `src/actions/contracts.ts`
+- [x] T027 [US1] Create `getContract` Server Action in `src/actions/contracts.ts`
 
 ### UI Components for US1
 
-- [ ] T028 [P] [US1] Create ContractCard component in `src/components/contracts/contract-card.tsx`
-- [ ] T029 [P] [US1] Create ContractList component in `src/components/contracts/contract-list.tsx`
-- [ ] T030 [P] [US1] Create EmptyState component in `src/components/contracts/empty-state.tsx`
-- [ ] T031 [P] [US1] Create SearchFilter component in `src/components/contracts/search-filter.tsx`
+- [x] T028 [P] [US1] Create ContractCard component in `src/components/contracts/contract-card.tsx`
+- [x] T029 [P] [US1] Create ContractList component in `src/components/contracts/contract-list.tsx`
+- [x] T030 [P] [US1] Create EmptyState component in `src/components/contracts/empty-state.tsx`
+- [x] T031 [P] [US1] Create SearchFilter component in `src/components/contracts/search-filter.tsx`
 
 ### Pages for US1
 
-- [ ] T032 [US1] Create contracts list page in `src/app/(dashboard)/contracts/page.tsx`
-- [ ] T033 [US1] Create contract detail page in `src/app/(dashboard)/contracts/[...path]/page.tsx`
-- [ ] T034 [US1] Create dashboard layout in `src/app/(dashboard)/layout.tsx` with navigation
+- [x] T032 [US1] Create contracts list page in `src/app/(dashboard)/contracts/page.tsx`
+- [x] T033 [US1] Create contract detail page in `src/app/(dashboard)/contracts/[...path]/page.tsx`
+- [x] T034 [US1] Create dashboard layout in `src/app/(dashboard)/layout.tsx` with navigation
 
 **Checkpoint**: Users can browse contracts, search/filter, and view details
 
