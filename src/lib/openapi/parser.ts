@@ -91,3 +91,13 @@ export function parseOpenAPI(content: string): OpenAPIObject {
   const format = detectFormat(content)
   return format === 'json' ? parseJson(content) : parseYaml(content)
 }
+
+/**
+ * Serialize an OpenAPI object to YAML string.
+ * Alias for serializeYaml for convenience.
+ * @param spec - OpenAPI object
+ * @returns YAML string
+ */
+export function serializeOpenAPI(spec: OpenAPIObject): string {
+  return serializeYaml(spec)
+}

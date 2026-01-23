@@ -154,11 +154,11 @@ export class GitHubContractRepository implements ContractRepository {
 
   async saveContract(
     filePath: string,
-    spec: OpenAPIObject,
+    specOrYaml: OpenAPIObject | string,
     message: string
   ): Promise<SaveResult> {
     const fullPath = `${this.contractsPath}/${filePath}`
-    const yaml = serializeYaml(spec)
+    const yaml = typeof specOrYaml === 'string' ? specOrYaml : serializeYaml(specOrYaml)
     const content = Buffer.from(yaml).toString('base64')
 
     // Check if file exists to get current SHA

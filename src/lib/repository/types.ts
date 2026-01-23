@@ -72,11 +72,11 @@ export interface ContractRepository {
   /**
    * Save a contract to the repository.
    * @param filePath - Path to save the contract
-   * @param spec - OpenAPI specification object
+   * @param specOrYaml - OpenAPI specification object or YAML string
    * @param message - Commit message
    * @returns Save result with commit info
    */
-  saveContract(filePath: string, spec: OpenAPIObject, message: string): Promise<SaveResult>
+  saveContract(filePath: string, specOrYaml: OpenAPIObject | string, message: string): Promise<SaveResult>
 
   /**
    * Delete a contract from the repository.

@@ -101,7 +101,7 @@ export class LocalContractRepository implements ContractRepository {
 
   async saveContract(
     filePath: string,
-    spec: OpenAPIObject,
+    specOrYaml: OpenAPIObject | string,
     _message: string
   ): Promise<SaveResult> {
     const fullPath = path.join(this.basePath, filePath)
@@ -111,7 +111,7 @@ export class LocalContractRepository implements ContractRepository {
     await fs.mkdir(dir, { recursive: true })
 
     // Serialize and write
-    const yaml = serializeYaml(spec)
+    const yaml = typeof specOrYaml === 'string' ? specOrYaml : serializeYaml(specOrYaml)
     await fs.writeFile(fullPath, yaml, 'utf-8')
 
     return {

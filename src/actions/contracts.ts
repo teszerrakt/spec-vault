@@ -65,3 +65,85 @@ export async function searchContracts(query: string): Promise<APIContract[]> {
       contract.filePath.toLowerCase().includes(lowerQuery)
   )
 }
+
+/**
+ * Result of a save operation.
+ */
+export interface SaveResult {
+  success: boolean
+  filePath?: string
+  commitSha?: string
+  error?: string
+}
+
+/**
+ * Save a contract to the repository.
+ * @param filePath - Path where to save the contract
+ * @param content - YAML content of the OpenAPI spec
+ * @param commitMessage - Commit message
+ * @returns Save result
+ */
+export async function saveContract(
+  filePath: string,
+  content: string,
+  commitMessage: string
+): Promise<SaveResult> {
+  const session = await auth()
+  if (!session) {
+    return { success: false, error: 'Unauthorized - please sign in' }
+  }
+
+  try {
+    const repo = createRepository({
+      accessToken: session.accessToken,
+      owner: process.env.GITHUB_OWNER,
+      repo: process.env.GITHUB_REPO,
+    })
+
+    const result = await repo.saveContract(filePath, content, commitMessage)
+
+    return {
+      success: true,
+      filePath: result.filePath,
+      commitSha: result.commitSha,
+    }
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    }
+  }
+}
+
+/**
+ * Delete a contract from the repository.
+ * @param filePath - Path to the contract to delete
+ * @param commitMessage - Commit message
+ * @returns Delete result
+ */
+export async function deleteContract(
+  filePath: string,
+  commitMessage: string
+): Promise<SaveResult> {
+  const session = await auth()
+  if (!session) {
+    return { success: false, error: 'Unauthorized - please sign in' }
+  }
+
+  try {
+    const repo = createRepository({
+      accessToken: session.accessToken,
+      owner: process.env.GITHUB_OWNER,
+      repo: process.env.GITHUB_REPO,
+    })
+
+    await repo.deleteContract(filePath, commitMessage)
+
+    return { success: true }
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    }
+  }
+}

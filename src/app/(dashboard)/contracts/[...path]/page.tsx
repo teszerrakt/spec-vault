@@ -59,7 +59,7 @@ export default async function ContractDetailPage({ params }: ContractDetailPageP
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" asChild>
-            <Link href={`/contracts/${filePath}/edit`}>Edit</Link>
+            <Link href={`/edit/${filePath}`}>Edit</Link>
           </Button>
         </div>
       </div>

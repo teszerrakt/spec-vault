@@ -115,37 +115,37 @@ Based on plan.md structure:
 
 ### AI Integration for US2
 
-- [ ] T035 [US2] Create AI conversion service in `src/lib/ai/converter.ts` (Vercel AI SDK)
-- [ ] T036 [US2] Create AI prompt templates in `src/lib/ai/prompts.ts` for each input type
+- [x] T035 [US2] Create AI conversion service in `src/lib/ai/converter.ts` (Vercel AI SDK)
+- [x] T036 [US2] Create AI prompt templates in `src/lib/ai/prompts.ts` for each input type
 
 ### File Processing for US2
 
-- [ ] T037 [P] [US2] Create JSON parser in `src/lib/import/json-parser.ts`
-- [ ] T038 [P] [US2] Create CSV parser in `src/lib/import/csv-parser.ts` (papaparse)
-- [ ] T039 [P] [US2] Create Excel parser in `src/lib/import/excel-parser.ts` (xlsx)
-- [ ] T040 [P] [US2] Create image processor in `src/lib/import/image-processor.ts` (AI vision)
-- [ ] T041 [US2] Create unified import processor in `src/lib/import/index.ts`
+- [x] T037 [P] [US2] Create JSON parser in `src/lib/import/json-parser.ts`
+- [x] T038 [P] [US2] Create CSV parser in `src/lib/import/csv-parser.ts` (papaparse)
+- [x] T039 [P] [US2] Create Excel parser in `src/lib/import/excel-parser.ts` (xlsx)
+- [x] T040 [P] [US2] Create image processor in `src/lib/import/image-processor.ts` (AI vision)
+- [x] T041 [US2] Create unified import processor in `src/lib/import/index.ts`
 
 ### Import Wizard State Machine for US2
 
-- [ ] T042 [US2] Create import wizard XState machine in `src/machines/import-wizard.ts`
+- [x] T042 [US2] Create import wizard XState machine in `src/machines/import-wizard.ts`
 
 ### Server Actions for US2
 
-- [ ] T043 [US2] Create `processImport` Server Action in `src/actions/import.ts`
+- [x] T043 [US2] Create `processImport` Server Action in `src/actions/import.ts`
 
 ### UI Components for US2
 
-- [ ] T044 [P] [US2] Create SourceSelector component in `src/components/wizard/source-selector.tsx`
-- [ ] T045 [P] [US2] Create FileUploader component in `src/components/wizard/file-uploader.tsx`
-- [ ] T046 [P] [US2] Create TextInput component in `src/components/wizard/text-input.tsx`
-- [ ] T047 [P] [US2] Create ProcessingIndicator component in `src/components/wizard/processing-indicator.tsx`
-- [ ] T048 [P] [US2] Create SpecPreview component in `src/components/wizard/spec-preview.tsx`
-- [ ] T049 [US2] Create ImportWizard container in `src/components/wizard/import-wizard.tsx`
+- [x] T044 [P] [US2] Create SourceSelector component in `src/components/wizard/source-selector.tsx`
+- [x] T045 [P] [US2] Create FileUploader component in `src/components/wizard/file-uploader.tsx`
+- [x] T046 [P] [US2] Create TextInput component in `src/components/wizard/text-input.tsx`
+- [x] T047 [P] [US2] Create ProcessingIndicator component in `src/components/wizard/processing-indicator.tsx`
+- [x] T048 [P] [US2] Create SpecPreview component in `src/components/wizard/spec-preview.tsx`
+- [x] T049 [US2] Create ImportWizard container in `src/components/wizard/import-wizard.tsx`
 
 ### Pages for US2
 
-- [ ] T050 [US2] Create import wizard page in `src/app/(dashboard)/import/page.tsx`
+- [x] T050 [US2] Create import wizard page in `src/app/(dashboard)/import/page.tsx`
 
 **Checkpoint**: Users can import API descriptions from multiple formats and preview generated specs
 
@@ -159,30 +159,30 @@ Based on plan.md structure:
 
 ### Editor Wizard State Machine for US3
 
-- [ ] T051 [US3] Create editor wizard XState machine in `src/machines/editor-wizard.ts`
+- [x] T051 [US3] Create editor wizard XState machine in `src/machines/editor-wizard.ts`
 
 ### Server Actions for US3
 
-- [ ] T052 [US3] Create `validateSpec` Server Action in `src/actions/validation.ts`
+- [x] T052 [US3] Create `validateSpec` Server Action in `src/actions/validation.ts`
 
 ### Editor Section Components for US3
 
-- [ ] T053 [P] [US3] Create InfoEditor component in `src/components/editor/info-editor.tsx`
-- [ ] T054 [P] [US3] Create ServersEditor component in `src/components/editor/servers-editor.tsx`
-- [ ] T055 [P] [US3] Create PathsEditor component in `src/components/editor/paths-editor.tsx`
-- [ ] T056 [P] [US3] Create SchemasEditor component in `src/components/editor/schemas-editor.tsx`
-- [ ] T057 [P] [US3] Create SecurityEditor component in `src/components/editor/security-editor.tsx`
-- [ ] T058 [P] [US3] Create ReviewPanel component in `src/components/editor/review-panel.tsx`
-- [ ] T059 [P] [US3] Create RawYamlViewer component in `src/components/editor/raw-yaml-viewer.tsx`
-- [ ] T060 [P] [US3] Create ValidationErrors component in `src/components/editor/validation-errors.tsx`
+- [x] T053 [P] [US3] Create InfoEditor component in `src/components/editor/info-editor.tsx`
+- [x] T054 [P] [US3] Create ServersEditor component in `src/components/editor/servers-editor.tsx`
+- [x] T055 [P] [US3] Create PathsEditor component in `src/components/editor/paths-editor.tsx`
+- [x] T056 [P] [US3] Create SchemasEditor component in `src/components/editor/schemas-editor.tsx`
+- [x] T057 [P] [US3] Create SecurityEditor component in `src/components/editor/security-editor.tsx`
+- [x] T058 [P] [US3] Create ReviewPanel component in `src/components/editor/review-panel.tsx`
+- [x] T059 [P] [US3] Create RawYamlViewer component in `src/components/editor/raw-yaml-viewer.tsx`
+- [x] T060 [P] [US3] Create ValidationErrors component in `src/components/editor/validation-errors.tsx`
 
 ### Editor Container for US3
 
-- [ ] T061 [US3] Create EditorWizard container in `src/components/editor/editor-wizard.tsx`
+- [x] T061 [US3] Create EditorWizard container in `src/components/editor/editor-wizard.tsx`
 
 ### Pages for US3
 
-- [ ] T062 [US3] Create editor page in `src/app/(dashboard)/contracts/[...path]/edit/page.tsx`
+- [x] T062 [US3] Create editor page in `src/app/(dashboard)/edit/[...path]/page.tsx`
 
 **Checkpoint**: Users can edit specs through guided workflow with real-time validation
 
