@@ -46,34 +46,34 @@ Based on plan.md structure:
 
 ### Authentication & Session
 
-- [ ] T010 Create NextAuth.js configuration in `src/auth.ts` with GitHub provider
-- [ ] T011 Create edge-compatible auth config in `src/auth.config.ts`
-- [ ] T012 Create NextAuth.js route handler in `src/app/api/auth/[...nextauth]/route.ts`
-- [ ] T013 Create auth middleware in `src/middleware.ts` for route protection
-- [ ] T014 [P] Create NextAuth.js type extensions in `src/types/next-auth.d.ts`
+- [x] T010 Create NextAuth.js configuration in `src/auth.ts` with GitHub provider
+- [x] T011 Create edge-compatible auth config in `src/auth.config.ts`
+- [x] T012 Create NextAuth.js route handler in `src/app/api/auth/[...nextauth]/route.ts`
+- [x] T013 Create auth middleware in `src/middleware.ts` for route protection
+- [x] T014 [P] Create NextAuth.js type extensions in `src/types/next-auth.d.ts`
 
 ### Type Definitions
 
-- [ ] T015 [P] Create core type definitions in `src/types/index.ts` (APIContract, ContractVersion, ChangelogEntry, ValidationError)
-- [ ] T016 [P] Create ContractRepository interface in `src/lib/repository/types.ts`
-- [ ] T017 [P] Create ImportSource types in `src/types/import.ts`
+- [x] T015 [P] Create core type definitions in `src/types/index.ts` (APIContract, ContractVersion, ChangelogEntry, ValidationError)
+- [x] T016 [P] Create ContractRepository interface in `src/lib/repository/types.ts`
+- [x] T017 [P] Create ImportSource types in `src/types/import.ts`
 
 ### ContractRepository Pattern
 
-- [ ] T018 Create LocalContractRepository in `src/lib/repository/local.ts` (filesystem implementation for dev mode)
-- [ ] T019 Create GitHubContractRepository in `src/lib/repository/github.ts` (Octokit implementation)
-- [ ] T020 Create repository factory in `src/lib/repository/index.ts` (selects based on env)
+- [x] T018 Create LocalContractRepository in `src/lib/repository/local.ts` (filesystem implementation for dev mode)
+- [x] T019 Create GitHubContractRepository in `src/lib/repository/github.ts` (Octokit implementation)
+- [x] T020 Create repository factory in `src/lib/repository/index.ts` (selects based on env)
 
 ### OpenAPI Utilities
 
-- [ ] T021 [P] Create OpenAPI parser utilities in `src/lib/openapi/parser.ts` (YAML parse/serialize)
-- [ ] T022 [P] Create OpenAPI validator in `src/lib/openapi/validator.ts` (using swagger-parser)
+- [x] T021 [P] Create OpenAPI parser utilities in `src/lib/openapi/parser.ts` (YAML parse/serialize)
+- [x] T022 [P] Create OpenAPI validator in `src/lib/openapi/validator.ts` (using swagger-parser)
 
 ### Shared UI Components
 
-- [ ] T023 Add shadcn/ui components: `pnpm dlx shadcn@latest add button card input label textarea select tabs dialog alert toast`
-- [ ] T024 [P] Create app layout in `src/app/layout.tsx` with SessionProvider
-- [ ] T025 [P] Create loading and error components in `src/components/ui/`
+- [x] T023 Add shadcn/ui components: `pnpm dlx shadcn@latest add button card input label textarea select tabs dialog alert sonner`
+- [x] T024 [P] Update app layout in `src/app/layout.tsx` with SessionProvider
+- [x] T025 [P] Create loading and error components in `src/components/ui/`
 
 **Checkpoint**: Foundation ready - user story implementation can now begin
 
