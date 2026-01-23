@@ -167,15 +167,63 @@ export function ImportWizard({ initialSourceType }: ImportWizardProps) {
       {/* Main content based on state */}
       <Card>
         <CardContent className="p-6">
-          {/* Idle / Select Source */}
-          {(state.matches('idle') || state.matches('selectSource')) && (
+          {/* Idle - just show source selector */}
+          {state.matches('idle') && (
             <SourceSelector
               selectedType={state.context.sourceType}
               onSelect={handleSourceSelect}
             />
           )}
 
-          {/* Input Content */}
+          {/* Select Source - show source selector AND file uploader */}
+          {state.matches('selectSource') && state.context.sourceType && (
+            <div className="space-y-6">
+              <SourceSelector
+                selectedType={state.context.sourceType}
+                onSelect={handleSourceSelect}
+              />
+
+              <div className="border-t pt-6">
+                <div className="text-center mb-4">
+                  <h2 className="text-lg font-semibold">Upload or Enter Content</h2>
+                  <p className="text-sm text-muted-foreground">
+                    {requiresFileUpload
+                      ? 'Upload a file to convert'
+                      : 'Upload a file or paste content directly'}
+                  </p>
+                </div>
+
+                {/* File Uploader */}
+                <FileUploader
+                  sourceType={state.context.sourceType}
+                  onFileSelect={handleFileSelect}
+                  selectedFile={state.context.file}
+                  onClear={handleFileClear}
+                />
+
+                {/* Text Input (for non-binary formats) */}
+                {!requiresFileUpload && !state.context.file && (
+                  <>
+                    <div className="relative my-4">
+                      <div className="absolute inset-0 flex items-center">
+                        <span className="w-full border-t" />
+                      </div>
+                      <div className="relative flex justify-center text-xs uppercase">
+                        <span className="bg-background px-2 text-muted-foreground">Or paste content</span>
+                      </div>
+                    </div>
+                    <TextInput
+                      sourceType={state.context.sourceType}
+                      value={state.context.textContent}
+                      onChange={handleTextChange}
+                    />
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Input Content - same as above but in dedicated state */}
           {state.matches('inputContent') && state.context.sourceType && (
             <div className="space-y-6">
               <div className="text-center">

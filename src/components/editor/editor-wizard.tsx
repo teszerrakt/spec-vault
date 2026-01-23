@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useCallback } from 'react'
+import { useEffect, useCallback, useState } from 'react'
 import { useMachine } from '@xstate/react'
 import { useRouter } from 'next/navigation'
 import { Check, FileCode2, Server, Route, Database, Shield, Eye } from 'lucide-react'
@@ -14,9 +14,11 @@ import { SchemasEditor } from './schemas-editor'
 import { SecurityEditor } from './security-editor'
 import { ReviewPanel } from './review-panel'
 import { RawYamlViewer } from './raw-yaml-viewer'
-import { ValidationErrors, ValidationErrorsBadge } from './validation-errors'
+import { ValidationErrorsBadge } from './validation-errors'
+import { SaveDialog } from '@/components/contracts/save-dialog'
 import { parseOpenAPI, serializeOpenAPI } from '@/lib/openapi/parser'
 import type { OpenAPIObject } from '@/types'
+import type { SaveResult } from '@/actions/contracts'
 
 interface EditorWizardProps {
   /** File path of the contract being edited */
@@ -46,6 +48,7 @@ export function EditorWizard({
 }: EditorWizardProps) {
   const router = useRouter()
   const [state, send] = useMachine(editorWizardMachine)
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false)
 
   const { spec, yaml, currentSection, isValid, validationErrors, commitMessage, isDirty } =
     state.context
@@ -127,8 +130,20 @@ export function EditorWizard({
   }, [send])
 
   const handleSave = useCallback(() => {
-    send({ type: 'SAVE' })
-  }, [send])
+    // Open the save dialog instead of directly saving
+    setSaveDialogOpen(true)
+  }, [])
+
+  const handleSaveSuccess = useCallback(
+    (result: SaveResult) => {
+      // Navigate to the saved contract
+      const targetPath = result.filePath || filePath
+      if (targetPath) {
+        router.push(`/contracts/${targetPath}`)
+      }
+    },
+    [router, filePath]
+  )
 
   const handleCommitMessageChange = useCallback(
     (message: string) => {
@@ -177,6 +192,16 @@ export function EditorWizard({
 
   return (
     <div className="space-y-6">
+      {/* Save Dialog */}
+      <SaveDialog
+        open={saveDialogOpen}
+        onOpenChange={setSaveDialogOpen}
+        filePath={filePath}
+        content={yaml}
+        onSaveSuccess={handleSaveSuccess}
+        isNew={isNew}
+      />
+
       {/* Section Navigation */}
       <div className="border-b">
         <div className="flex items-center overflow-x-auto pb-2">
@@ -279,7 +304,7 @@ export function EditorWizard({
             ) : (
               <Button
                 onClick={handleSave}
-                disabled={!isValid || !commitMessage.trim() || isSaving}
+                disabled={!isValid || isSaving}
               >
                 {isSaving ? 'Saving...' : 'Save Specification'}
               </Button>

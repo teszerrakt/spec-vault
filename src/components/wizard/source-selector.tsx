@@ -37,13 +37,13 @@ const sourceOptions: SourceOption[] = [
     icon: FileSpreadsheet,
     accept: '.csv,text/csv',
   },
-  {
-    type: 'excel',
-    title: 'Excel',
-    description: 'Spreadsheets with API documentation',
-    icon: FileSpreadsheet,
-    accept: '.xls,.xlsx,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  },
+  // {
+  //   type: 'excel',
+  //   title: 'Excel',
+  //   description: 'Spreadsheets with API documentation',
+  //   icon: FileSpreadsheet,
+  //   accept: '.xls,.xlsx,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  // },
   {
     type: 'image',
     title: 'Image',

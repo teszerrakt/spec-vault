@@ -1,0 +1,105 @@
+{
+  "api": {
+    "name": "User Management API",
+    "version": "1.0.0",
+    "baseUrl": "https://api.example.com/v1"
+  },
+  "endpoints": [
+    {
+      "method": "GET",
+      "path": "/users",
+      "description": "List all users with pagination",
+      "queryParams": ["page", "limit", "sort"],
+      "response": {
+        "type": "array",
+        "items": {
+          "id": "integer",
+          "name": "string",
+          "email": "string",
+          "role": "string"
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/users",
+      "description": "Create a new user account",
+      "requestBody": {
+        "name": "string (required)",
+        "email": "string (required)",
+        "password": "string (required, min 8 chars)",
+        "role": "string (optional, default: user)"
+      },
+      "response": {
+        "id": "integer",
+        "name": "string",
+        "email": "string",
+        "role": "string",
+        "createdAt": "datetime"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/users/{id}",
+      "description": "Get a specific user by their ID",
+      "pathParams": ["id"],
+      "response": {
+        "id": "integer",
+        "name": "string",
+        "email": "string",
+        "role": "string",
+        "createdAt": "datetime",
+        "updatedAt": "datetime"
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/users/{id}",
+      "description": "Update an existing user",
+      "pathParams": ["id"],
+      "requestBody": {
+        "name": "string (optional)",
+        "email": "string (optional)",
+        "role": "string (optional)"
+      },
+      "response": {
+        "id": "integer",
+        "name": "string",
+        "email": "string",
+        "role": "string",
+        "updatedAt": "datetime"
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/users/{id}",
+      "description": "Delete a user account",
+      "pathParams": ["id"],
+      "response": {
+        "success": "boolean",
+        "message": "string"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/users/{id}/reset-password",
+      "description": "Send password reset email to user",
+      "pathParams": ["id"],
+      "response": {
+        "success": "boolean",
+        "message": "string"
+      }
+    }
+  ],
+  "authentication": {
+    "type": "Bearer Token",
+    "header": "Authorization"
+  },
+  "errorResponses": {
+    "400": "Bad Request - Invalid input",
+    "401": "Unauthorized - Missing or invalid token",
+    "403": "Forbidden - Insufficient permissions",
+    "404": "Not Found - Resource does not exist",
+    "500": "Internal Server Error"
+  }
+}

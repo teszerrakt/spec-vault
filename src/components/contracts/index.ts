@@ -1,4 +1,7 @@
 export { ContractCard } from './contract-card'
 export { ContractList } from './contract-list'
 export { EmptyState } from './empty-state'
+export { HistoryPanel } from './history-panel'
+export { SaveDialog } from './save-dialog'
 export { SearchFilter } from './search-filter'
+export { VersionList } from './version-list'

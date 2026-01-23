@@ -196,20 +196,20 @@ Based on plan.md structure:
 
 ### Server Actions for US4
 
-- [ ] T063 [US4] Create `saveContract` Server Action in `src/actions/contracts.ts`
-- [ ] T064 [US4] Create `deleteContract` Server Action in `src/actions/contracts.ts`
-- [ ] T065 [US4] Create `getContractHistory` Server Action in `src/actions/github.ts`
+- [x] T063 [US4] Create `saveContract` Server Action in `src/actions/contracts.ts`
+- [x] T064 [US4] Create `deleteContract` Server Action in `src/actions/contracts.ts`
+- [x] T065 [US4] Create `getContractHistory` Server Action in `src/actions/github.ts`
 
 ### UI Components for US4
 
-- [ ] T066 [P] [US4] Create SaveDialog component in `src/components/contracts/save-dialog.tsx`
-- [ ] T067 [P] [US4] Create HistoryPanel component in `src/components/contracts/history-panel.tsx`
-- [ ] T068 [P] [US4] Create VersionList component in `src/components/contracts/version-list.tsx`
+- [x] T066 [P] [US4] Create SaveDialog component in `src/components/contracts/save-dialog.tsx`
+- [x] T067 [P] [US4] Create HistoryPanel component in `src/components/contracts/history-panel.tsx`
+- [x] T068 [P] [US4] Create VersionList component in `src/components/contracts/version-list.tsx`
 
 ### Integration for US4
 
-- [ ] T069 [US4] Integrate save functionality into EditorWizard in `src/components/editor/editor-wizard.tsx`
-- [ ] T070 [US4] Add history tab to contract detail page in `src/app/(dashboard)/contracts/[...path]/page.tsx`
+- [x] T069 [US4] Integrate save functionality into EditorWizard in `src/components/editor/editor-wizard.tsx`
+- [x] T070 [US4] Add history tab to contract detail page in `src/app/(dashboard)/contracts/[...path]/page.tsx`
 
 **Checkpoint**: Users can save contracts with commits and view version history
 

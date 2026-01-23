@@ -1,5 +1,5 @@
 import { generateText } from 'ai'
-import { openai } from '@ai-sdk/openai'
+import { createOpenAI } from '@ai-sdk/openai'
 import type { ImportSourceType, ConversionResult } from '@/types/import'
 import { SYSTEM_PROMPT, getUserPrompt, getRefinementPrompt, getImageExtractionPrompt } from './prompts'
 import { validateOpenAPI } from '@/lib/openapi/validator'
@@ -24,6 +24,21 @@ export interface ConversionOptions {
 
 const DEFAULT_MODEL = 'gpt-4o'
 const DEFAULT_MAX_TOKENS = 4096
+
+/**
+ * Create OpenAI provider with explicit API key configuration.
+ * This ensures the API key is read at runtime rather than module load time.
+ */
+function getOpenAI() {
+  const apiKey = process.env.OPENAI_API_KEY
+  if (!apiKey) {
+    throw new Error(
+      'OPENAI_API_KEY environment variable is not set. ' +
+        'Please add it to your .env.local file.'
+    )
+  }
+  return createOpenAI({ apiKey })
+}
 
 /**
  * Convert input content to an OpenAPI specification using AI.
@@ -76,6 +91,7 @@ async function convertTextToOpenAPI(
 ): Promise<string> {
   const userPrompt = getUserPrompt(sourceType, textContent)
 
+  const openai = getOpenAI()
   const result = await generateText({
     model: openai(model),
     system: SYSTEM_PROMPT,
@@ -96,6 +112,7 @@ async function convertImageToOpenAPI(
   model: string,
   maxTokens: number
 ): Promise<string> {
+  const openai = getOpenAI()
   // First, extract text content from the image
   const extractionResult = await generateText({
     model: openai(model),
@@ -143,6 +160,7 @@ export async function refineOpenAPISpec(
   const modelName = model ?? DEFAULT_MODEL
 
   try {
+    const openai = getOpenAI()
     const result = await generateText({
       model: openai(modelName),
       system: SYSTEM_PROMPT,
@@ -199,6 +217,7 @@ function cleanYamlOutput(text: string): string {
  */
 export async function checkAIAvailability(): Promise<{ available: boolean; error?: string }> {
   try {
+    const openai = getOpenAI()
     // Simple test to check if the API key works
     await generateText({
       model: openai('gpt-4o-mini'),

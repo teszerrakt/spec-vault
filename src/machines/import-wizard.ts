@@ -1,5 +1,6 @@
 import { setup, assign, fromPromise } from 'xstate'
 import type { ImportSourceType, ConversionResult } from '@/types/import'
+import { processImportAction, processImageImportAction } from '@/actions/import'
 
 /**
  * Import wizard context - all state data.
@@ -59,25 +60,59 @@ const initialContext: ImportWizardContext = {
 }
 
 /**
- * Process import actor - performs the actual AI conversion.
+ * Read file as text content.
+ */
+async function readFileAsText(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result as string)
+    reader.onerror = () => reject(reader.error)
+    reader.readAsText(file)
+  })
+}
+
+/**
+ * Read file as base64.
+ */
+async function readFileAsBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => {
+      const result = reader.result as string
+      // Remove data URL prefix (e.g., "data:image/png;base64,")
+      const base64 = result.split(',')[1]
+      resolve(base64)
+    }
+    reader.onerror = () => reject(reader.error)
+    reader.readAsDataURL(file)
+  })
+}
+
+/**
+ * Process import actor - calls Server Actions for AI conversion.
  */
 const processImportActor = fromPromise<
   ConversionResult,
   { sourceType: ImportSourceType; file: File | null; textContent: string }
 >(async ({ input }) => {
-  // Dynamic import to avoid bundling server code in client
-  const { processImport, createImportSourceFromFile, createImportSourceFromText } = await import('@/lib/import')
-
-  let source
-  if (input.file) {
-    source = await createImportSourceFromFile(input.file)
-  } else if (input.textContent) {
-    source = createImportSourceFromText(input.textContent, input.sourceType)
-  } else {
-    throw new Error('No file or text content provided')
+  // Handle image files - need base64 encoding
+  if (input.sourceType === 'image' && input.file) {
+    const base64Data = await readFileAsBase64(input.file)
+    return processImageImportAction(base64Data, input.file.type, input.file.name)
   }
 
-  return processImport(source)
+  // Handle file uploads - read as text and send to Server Action
+  if (input.file) {
+    const content = await readFileAsText(input.file)
+    return processImportAction(input.sourceType, content, input.file.name)
+  }
+
+  // Handle text input
+  if (input.textContent) {
+    return processImportAction(input.sourceType, input.textContent)
+  }
+
+  throw new Error('No file or text content provided')
 })
 
 /**
@@ -129,16 +164,18 @@ export const importWizardMachine = setup({
           }),
         },
         UPLOAD_FILE: {
-          target: 'inputContent',
           actions: assign({
             file: ({ event }) => event.file,
           }),
         },
         ENTER_TEXT: {
-          target: 'inputContent',
           actions: assign({
             textContent: ({ event }) => event.text,
           }),
+        },
+        PROCESS: {
+          target: 'processing',
+          guard: 'hasContent',
         },
         BACK: {
           target: 'idle',

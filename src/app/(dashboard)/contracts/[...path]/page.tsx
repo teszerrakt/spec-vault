@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { HistoryPanel } from '@/components/contracts/history-panel'
 
 interface ContractDetailPageProps {
   params: Promise<{ path: string[] }>
@@ -123,6 +124,7 @@ export default async function ContractDetailPage({ params }: ContractDetailPageP
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="endpoints">Endpoints</TabsTrigger>
           <TabsTrigger value="schemas">Schemas</TabsTrigger>
+          <TabsTrigger value="history">History</TabsTrigger>
           <TabsTrigger value="raw">Raw YAML</TabsTrigger>
         </TabsList>
 
@@ -224,6 +226,10 @@ export default async function ContractDetailPage({ params }: ContractDetailPageP
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="history" className="space-y-4">
+          <HistoryPanel filePath={filePath} />
         </TabsContent>
 
         <TabsContent value="raw">
