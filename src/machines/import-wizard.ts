@@ -1,4 +1,5 @@
 import { assign, fromCallback, fromPromise, setup } from 'xstate'
+import { cleanYamlOutput } from '@/lib/ai/converter'
 import { detectSourceType } from '@/lib/import'
 import { validateOpenAPI } from '@/lib/openapi/validator'
 import type { ImportSourceType } from '@/types/import'
@@ -93,28 +94,6 @@ async function readFileAsBase64(file: File): Promise<string> {
     reader.onerror = () => reject(reader.error)
     reader.readAsDataURL(file)
   })
-}
-
-/**
- * Clean up YAML output by removing markdown code blocks if present.
- */
-function cleanYamlOutput(text: string): string {
-  let cleaned = text.trim()
-
-  // Remove markdown code blocks
-  if (cleaned.startsWith('```yaml')) {
-    cleaned = cleaned.slice(7)
-  } else if (cleaned.startsWith('```yml')) {
-    cleaned = cleaned.slice(6)
-  } else if (cleaned.startsWith('```')) {
-    cleaned = cleaned.slice(3)
-  }
-
-  if (cleaned.endsWith('```')) {
-    cleaned = cleaned.slice(0, -3)
-  }
-
-  return cleaned.trim()
 }
 
 /**
