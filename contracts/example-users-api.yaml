@@ -1,13 +1,16 @@
 openapi: 3.0.3
 info:
   title: "[EXAMPLE] Users API"
-  version: "2.3.0"
+  version: "2.4.0"
   description: "Sample user management API for demonstration purposes. Updated with search endpoint and phone number support."
   contact:
     name: API Support
     email: api-support@example.com
 servers:
   - url: https://api.example.com/v1
+    description: Production server
+  - url: https://api-staging.example.com/v1
+    description: Staging server
 paths:
   /users:
     get:
