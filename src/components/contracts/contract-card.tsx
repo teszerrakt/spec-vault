@@ -12,9 +12,12 @@ export function ContractCard({ contract, className }: ContractCardProps) {
   const href = `/contracts/${contract.filePath}`
 
   return (
-    <Link href={href}>
+    <Link href={href} className="block h-full">
       <Card
-        className={cn('transition-colors hover:border-primary/50 hover:bg-muted/50', className)}
+        className={cn(
+          'flex h-full flex-col transition-colors hover:border-primary/50 hover:bg-muted/50',
+          className
+        )}
       >
         <CardHeader className="pb-2">
           <div className="flex items-start justify-between gap-2">
@@ -25,12 +28,14 @@ export function ContractCard({ contract, className }: ContractCardProps) {
             {contract.filePath}
           </CardDescription>
         </CardHeader>
-        <CardContent className="pt-0">
-          {contract.description && (
-            <p className="mb-3 line-clamp-2 text-sm text-muted-foreground">
-              {contract.description}
-            </p>
-          )}
+        <CardContent className="flex flex-1 flex-col pt-0">
+          {/* Description area - takes up available space */}
+          <div className="mb-3 min-h-[2.5rem] flex-1">
+            {contract.description && (
+              <p className="line-clamp-2 text-sm text-muted-foreground">{contract.description}</p>
+            )}
+          </div>
+          {/* Footer - always at bottom */}
           <div className="flex items-center gap-4 text-xs text-muted-foreground">
             <span>v{contract.version}</span>
             <span>Updated {formatRelativeDate(contract.lastModified)}</span>
