@@ -312,11 +312,10 @@ Settings are stored in `.api-platform/config.json` within the repository.
 - [ ] T094 [P] Implement toast notifications for success/error feedback
 - [ ] T095 [P] Add keyboard shortcuts for common actions
 - [ ] T096 Implement pagination for contract list (large repositories)
-- [ ] T097 [P] Add responsive design for mobile/tablet
-- [ ] T098 Code cleanup: remove unused imports, consolidate duplicate logic
-- [ ] T099 Performance audit: check bundle size, optimize imports
-- [ ] T100 Security audit: verify all sensitive operations are server-side
-- [ ] T101 Run quickstart.md validation to verify setup instructions
+- [ ] T097 Code cleanup: remove unused imports, consolidate duplicate logic
+- [ ] T098 Performance audit: check bundle size, optimize imports
+- [ ] T099 Security audit: verify all sensitive operations are server-side
+- [ ] T100 Run quickstart.md validation to verify setup instructions
 
 ---
 
