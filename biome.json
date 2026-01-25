@@ -1,0 +1,68 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.3.12/schema.json",
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+  "files": {
+    "includes": [
+      "**",
+      "!**/.next/",
+      "!**/out/",
+      "!**/build/",
+      "!**/node_modules/",
+      "!**/coverage/",
+      "!**/*.min.js",
+      "!**/*.min.css",
+      "!**/*.css",
+      "!**/next-env.d.ts"
+    ]
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 100
+  },
+  "javascript": {
+    "formatter": {
+      "semicolons": "asNeeded",
+      "quoteStyle": "single",
+      "trailingCommas": "es5"
+    }
+  },
+  "css": {
+    "parser": {
+      "cssModules": true,
+      "allowWrongLineComments": true
+    },
+    "linter": {
+      "enabled": false
+    },
+    "formatter": {
+      "enabled": false
+    }
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true,
+      "correctness": {
+        "noUnusedImports": "error",
+        "noUnusedVariables": "warn"
+      },
+      "style": {
+        "noNonNullAssertion": "off"
+      },
+      "suspicious": {
+        "noArrayIndexKey": "off",
+        "noImplicitAnyLet": "off"
+      },
+      "a11y": {
+        "noSvgWithoutTitle": "off",
+        "useButtonType": "warn"
+      }
+    }
+  }
+}

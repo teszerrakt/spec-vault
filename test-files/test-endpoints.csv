@@ -1,0 +1,17 @@
+method,path,description,request_body,response_type,tags
+GET,/products,List all products with filtering and pagination,,array,products
+POST,/products,Create a new product,name;price;category;description,object,products
+GET,/products/{id},Get a specific product by ID,,object,products
+PUT,/products/{id},Update an existing product,name;price;category;description,object,products
+DELETE,/products/{id},Delete a product,,none,products
+GET,/products/search,Search products by keyword or category,,array,products
+GET,/categories,List all product categories,,array,categories
+POST,/categories,Create a new category,name;description;parentId,object,categories
+GET,/categories/{id},Get category details,,object,categories
+PUT,/categories/{id},Update a category,name;description,object,categories
+DELETE,/categories/{id},Delete a category,,none,categories
+GET,/categories/{id}/products,List all products in a category,,array,categories;products
+POST,/orders,Create a new order,items;shippingAddress;paymentMethod,object,orders
+GET,/orders/{id},Get order details,,object,orders
+GET,/orders/customer/{customerId},List orders for a customer,,array,orders
+PUT,/orders/{id}/status,Update order status,status,object,orders

@@ -1,0 +1,291 @@
+openapi: 3.0.3
+info:
+  title: "[EXAMPLE] Users API"
+  version: "2.5.0"
+  description: "Sample user management API for demonstration purposes. Added avatar support and suspended status."
+  contact:
+    name: API Support
+    email: api-support@example.com
+servers:
+  - url: https://api.example.com/v1
+    description: Production server
+  - url: https://api-staging.example.com/v1
+    description: Staging server
+paths:
+  /users:
+    get:
+      summary: List all users
+      operationId: listUsers
+      tags:
+        - Users
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: status
+          in: query
+          description: Filter users by status
+          schema:
+            type: string
+            enum:
+              - active
+              - inactive
+              - pending
+      responses:
+        "200":
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+    post:
+      summary: Create a new user
+      operationId: createUser
+      tags:
+        - Users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUserRequest"
+      responses:
+        "201":
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          description: Invalid request
+  /users/search:
+    get:
+      summary: Search users by query
+      operationId: searchUsers
+      tags:
+        - Users
+      parameters:
+        - name: q
+          in: query
+          required: true
+          description: Search query string
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Search results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/User"
+                  total:
+                    type: integer
+  /users/{id}:
+    get:
+      summary: Get a user by ID
+      operationId: getUser
+      tags:
+        - Users
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "404":
+          description: User not found
+    put:
+      summary: Update a user
+      operationId: updateUser
+      tags:
+        - Users
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserRequest"
+      responses:
+        "200":
+          description: User updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "404":
+          description: User not found
+    delete:
+      summary: Delete a user
+      operationId: deleteUser
+      tags:
+        - Users
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: User deleted
+        "404":
+          description: User not found
+  /users/{id}/avatar:
+    get:
+      summary: Get user avatar
+      operationId: getUserAvatar
+      tags:
+        - Users
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: User avatar URL
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url:
+                    type: string
+                    format: uri
+        "404":
+          description: User not found
+    put:
+      summary: Update user avatar
+      operationId: updateUserAvatar
+      tags:
+        - Users
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: Avatar updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url:
+                    type: string
+                    format: uri
+        "404":
+          description: User not found
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        phoneNumber:
+          type: string
+          description: User's phone number in E.164 format
+          deprecated: true
+        avatar:
+          type: string
+          format: uri
+          description: URL to user's avatar image
+        role:
+          type: string
+          enum:
+            - admin
+            - user
+        status:
+          type: string
+          enum:
+            - active
+            - inactive
+            - pending
+            - suspended
+        created_at:
+          type: string
+          format: date-time
+    CreateUserRequest:
+      type: object
+      required:
+        - email
+        - name
+      properties:
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        phoneNumber:
+          type: string
+        role:
+          type: string
+          enum:
+            - admin
+            - user
+    UpdateUserRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        phoneNumber:
+          type: string
+        role:
+          type: string
+          enum:
+            - admin
+            - user
