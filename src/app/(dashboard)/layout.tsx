@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { auth, signOut } from '@/auth'
@@ -23,6 +24,13 @@ export default async function DashboardLayout({ children }: { children: React.Re
           <div className="w-full px-4 sm:px-6 lg:px-8 flex h-14 items-center">
             <div className="mr-4 flex">
               <Link href="/contracts" className="mr-6 flex items-center space-x-2">
+                <Image
+                  src="/logo.png"
+                  alt="Spec Vault"
+                  width={32}
+                  height={32}
+                  className="dark:invert"
+                />
                 <span className="font-bold">Spec Vault</span>
               </Link>
               <nav className="flex items-center space-x-6 text-sm font-medium">

@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import { signIn } from '@/auth'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -12,6 +13,15 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
+          <div className="mx-auto mb-2">
+            <Image
+              src="/logo.png"
+              alt="Spec Vault"
+              width={64}
+              height={64}
+              className="dark:invert"
+            />
+          </div>
           <CardTitle className="text-2xl">Spec Vault</CardTitle>
           <CardDescription>Sign in to manage your API contracts</CardDescription>
         </CardHeader>
