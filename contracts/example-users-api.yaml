@@ -1,8 +1,8 @@
 openapi: 3.0.3
 info:
   title: "[EXAMPLE] Users API"
-  version: "2.4.0"
-  description: "Sample user management API for demonstration purposes. Updated with search endpoint and phone number support."
+  version: "2.5.0"
+  description: "Sample user management API for demonstration purposes. Added avatar support and suspended status."
   contact:
     name: API Support
     email: api-support@example.com
@@ -162,6 +162,65 @@ paths:
           description: User deleted
         "404":
           description: User not found
+  /users/{id}/avatar:
+    get:
+      summary: Get user avatar
+      operationId: getUserAvatar
+      tags:
+        - Users
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: User avatar URL
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url:
+                    type: string
+                    format: uri
+        "404":
+          description: User not found
+    put:
+      summary: Update user avatar
+      operationId: updateUserAvatar
+      tags:
+        - Users
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: Avatar updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url:
+                    type: string
+                    format: uri
+        "404":
+          description: User not found
 components:
   schemas:
     User:
@@ -177,6 +236,11 @@ components:
         phoneNumber:
           type: string
           description: User's phone number in E.164 format
+          deprecated: true
+        avatar:
+          type: string
+          format: uri
+          description: URL to user's avatar image
         role:
           type: string
           enum:
@@ -188,6 +252,7 @@ components:
             - active
             - inactive
             - pending
+            - suspended
         created_at:
           type: string
           format: date-time
