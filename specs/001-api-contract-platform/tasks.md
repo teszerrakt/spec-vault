@@ -313,7 +313,7 @@ Settings are stored in `.api-platform/config.json` within the repository.
 - [x] T095 [P] Add keyboard shortcuts for common actions
 - [x] T096 Implement pagination for contract list (large repositories)
 - [x] T097 Code cleanup: ESLint/Prettier → Biome migration, Husky pre-commit hooks
-- [ ] T098 Performance audit: check bundle size, optimize imports
+- [x] T098 Performance audit: simplify import architecture, remove heavy deps (xlsx, papaparse), dynamic import for openapi-diff, bundle analyzer
 - [x] T099 Security audit: verify all sensitive operations are server-side
 - [x] T100 Run quickstart.md validation to verify setup instructions
 

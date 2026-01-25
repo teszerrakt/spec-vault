@@ -31,75 +31,14 @@ Output ONLY the YAML content, no explanations or markdown code blocks.`
 
 /**
  * Get the appropriate user prompt for a given source type.
+ * Now simplified: 'image' for vision processing, 'text' for everything else.
  */
 export function getUserPrompt(sourceType: ImportSourceType, content: string): string {
-  switch (sourceType) {
-    case 'json':
-      return getJsonPrompt(content)
-    case 'csv':
-      return getCsvPrompt(content)
-    case 'excel':
-      return getExcelPrompt(content)
-    case 'image':
-      return getImagePrompt()
-    case 'text':
-      return getTextPrompt(content)
-    default:
-      return getTextPrompt(content)
+  if (sourceType === 'image') {
+    return getImagePrompt()
   }
-}
-
-/**
- * Prompt for JSON input (could be API responses, schemas, or partial specs).
- */
-function getJsonPrompt(content: string): string {
-  return `Convert the following JSON data into an OpenAPI 3.1 specification.
-
-The JSON may represent:
-- API response examples
-- Request/response schemas
-- A partial OpenAPI specification
-- Sample API data
-
-Analyze the structure and create appropriate endpoints, schemas, and documentation.
-
-JSON Input:
-${content}`
-}
-
-/**
- * Prompt for CSV input (typically endpoint lists or data tables).
- */
-function getCsvPrompt(content: string): string {
-  return `Convert the following CSV data into an OpenAPI 3.1 specification.
-
-The CSV likely contains:
-- API endpoint definitions (method, path, description)
-- Data schema definitions (field names, types)
-- Parameter specifications
-
-Analyze the columns and rows to create appropriate API documentation.
-
-CSV Input:
-${content}`
-}
-
-/**
- * Prompt for Excel data (similar to CSV but potentially more structured).
- */
-function getExcelPrompt(content: string): string {
-  return `Convert the following spreadsheet data into an OpenAPI 3.1 specification.
-
-The spreadsheet data may contain:
-- Multiple sheets with different API sections
-- Endpoint definitions with methods, paths, and descriptions
-- Schema definitions with field specifications
-- Parameter and response documentation
-
-Analyze the structure to create comprehensive API documentation.
-
-Spreadsheet Data:
-${content}`
+  // All text-based inputs (JSON, CSV, plain text, markdown) use the same prompt
+  return getTextPrompt(content)
 }
 
 /**
@@ -118,20 +57,21 @@ Extract all API information and convert it into an OpenAPI 3.1 specification.`
 }
 
 /**
- * Prompt for plain text input (informal API descriptions).
+ * Prompt for text input (handles all text formats: JSON, CSV, plain text, markdown).
+ * The AI will automatically detect and handle the format.
  */
 function getTextPrompt(content: string): string {
-  return `Convert the following text description into an OpenAPI 3.1 specification.
+  return `Convert the following content into an OpenAPI 3.1 specification.
 
-The text describes an API and may include:
-- Informal endpoint descriptions
-- API requirements or specifications
-- Documentation in various formats (markdown, plain text)
-- Technical requirements
+The content may be in any format:
+- JSON (API responses, schemas, or partial OpenAPI specs)
+- CSV (endpoint lists, schema definitions)
+- Plain text (informal API descriptions)
+- Markdown (documentation)
 
-Extract all API-related information and create proper OpenAPI documentation.
+Analyze the structure and format, then create appropriate endpoints, schemas, and documentation.
 
-Text Input:
+Input:
 ${content}`
 }
 

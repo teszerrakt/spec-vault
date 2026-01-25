@@ -1,7 +1,8 @@
 /**
  * Supported import source types.
+ * Simplified: AI handles all text formats, 'image' for vision processing.
  */
-export type ImportSourceType = 'json' | 'csv' | 'excel' | 'image' | 'text'
+export type ImportSourceType = 'image' | 'text'
 
 /**
  * Import source - ephemeral, stored only in wizard state during import flow.

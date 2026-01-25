@@ -1,7 +1,7 @@
 'use client'
 
 import { useMachine } from '@xstate/react'
-import { ArrowLeft, ArrowRight } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
@@ -15,31 +15,16 @@ import {
   getTotalSteps,
   importWizardMachine,
 } from '@/machines/import-wizard'
-import type { ImportSourceType } from '@/types/import'
-import { FileUploader } from './file-uploader'
 import { ProcessingIndicator } from './processing-indicator'
-import { SourceSelector } from './source-selector'
 import { SpecPreview } from './spec-preview'
-import { TextInput } from './text-input'
+import { UnifiedInput } from './unified-input'
 
-interface ImportWizardProps {
-  /** Initial source type if pre-selected */
-  initialSourceType?: ImportSourceType
-}
-
-export function ImportWizard({ initialSourceType }: ImportWizardProps) {
+export function ImportWizard() {
   const router = useRouter()
   const [state, send] = useMachine(importWizardMachine)
   const [elapsedTime, setElapsedTime] = useState(0)
   const [saveDialogOpen, setSaveDialogOpen] = useState(false)
   const processingStartTimeRef = useRef<number | null>(null)
-
-  // Initialize with source type if provided
-  useEffect(() => {
-    if (initialSourceType && state.matches('idle')) {
-      send({ type: 'SELECT_SOURCE', sourceType: initialSourceType })
-    }
-  }, [initialSourceType, state, send])
 
   // Track elapsed time during processing
   const isProcessing = state.matches('processing')
@@ -88,13 +73,6 @@ export function ImportWizard({ initialSourceType }: ImportWizardProps) {
   }, [state.value, state.context.isValid, state.context.errorMessage])
 
   // Event handlers
-  const handleSourceSelect = useCallback(
-    (sourceType: ImportSourceType) => {
-      send({ type: 'SELECT_SOURCE', sourceType })
-    },
-    [send]
-  )
-
   const handleFileSelect = useCallback(
     (file: File) => {
       send({ type: 'UPLOAD_FILE', file })
@@ -103,7 +81,7 @@ export function ImportWizard({ initialSourceType }: ImportWizardProps) {
   )
 
   const handleFileClear = useCallback(() => {
-    send({ type: 'UPLOAD_FILE', file: null as unknown as File })
+    send({ type: 'CLEAR_FILE' })
   }, [send])
 
   const handleTextChange = useCallback(
@@ -154,19 +132,10 @@ export function ImportWizard({ initialSourceType }: ImportWizardProps) {
 
   // Determine if we can proceed
   const canProcess =
-    (state.matches('inputContent') || state.matches('selectSource')) &&
+    state.matches('inputContent') &&
     (state.context.file !== null || state.context.textContent.trim().length > 0)
 
-  const canGoBack =
-    state.matches('selectSource') ||
-    state.matches('inputContent') ||
-    state.matches('preview') ||
-    state.matches('editing') ||
-    state.matches('error')
-
-  // Check if source type requires file upload only
-  const requiresFileUpload =
-    state.context.sourceType === 'excel' || state.context.sourceType === 'image'
+  const canGoBack = state.matches('preview') || state.matches('editing') || state.matches('error')
 
   return (
     <>
@@ -181,7 +150,7 @@ export function ImportWizard({ initialSourceType }: ImportWizardProps) {
       />
 
       <div className="w-full flex justify-center">
-        <div className="w-full max-w-4xl space-y-6">
+        <div className="w-full max-w-5xl space-y-6">
           {/* Header with progress */}
           <div className="flex items-center justify-between">
             <div>
@@ -200,105 +169,17 @@ export function ImportWizard({ initialSourceType }: ImportWizardProps) {
           {/* Main content based on state */}
           <Card>
             <CardContent className="p-6">
-              {/* Idle - just show source selector */}
-              {state.matches('idle') && (
-                <SourceSelector
-                  selectedType={state.context.sourceType}
-                  onSelect={handleSourceSelect}
+              {/* Input - Unified 2-column layout */}
+              {state.matches('inputContent') && (
+                <UnifiedInput
+                  textContent={state.context.textContent}
+                  onTextChange={handleTextChange}
+                  selectedFile={state.context.file}
+                  onFileSelect={handleFileSelect}
+                  onFileClear={handleFileClear}
+                  onProcess={handleProcess}
+                  canProcess={canProcess}
                 />
-              )}
-
-              {/* Select Source - show source selector AND file uploader */}
-              {state.matches('selectSource') && state.context.sourceType && (
-                <div className="space-y-6">
-                  <SourceSelector
-                    selectedType={state.context.sourceType}
-                    onSelect={handleSourceSelect}
-                  />
-
-                  <div className="border-t pt-6">
-                    <div className="text-center mb-4">
-                      <h2 className="text-lg font-semibold">Upload or Enter Content</h2>
-                      <p className="text-sm text-muted-foreground">
-                        {requiresFileUpload
-                          ? 'Upload a file to convert'
-                          : 'Upload a file or paste content directly'}
-                      </p>
-                    </div>
-
-                    {/* File Uploader */}
-                    <FileUploader
-                      sourceType={state.context.sourceType}
-                      onFileSelect={handleFileSelect}
-                      selectedFile={state.context.file}
-                      onClear={handleFileClear}
-                    />
-
-                    {/* Text Input (for non-binary formats) */}
-                    {!requiresFileUpload && !state.context.file && (
-                      <>
-                        <div className="relative my-4">
-                          <div className="absolute inset-0 flex items-center">
-                            <span className="w-full border-t" />
-                          </div>
-                          <div className="relative flex justify-center text-xs uppercase">
-                            <span className="bg-background px-2 text-muted-foreground">
-                              Or paste content
-                            </span>
-                          </div>
-                        </div>
-                        <TextInput
-                          sourceType={state.context.sourceType}
-                          value={state.context.textContent}
-                          onChange={handleTextChange}
-                        />
-                      </>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Input Content - same as above but in dedicated state */}
-              {state.matches('inputContent') && state.context.sourceType && (
-                <div className="space-y-6">
-                  <div className="text-center">
-                    <h2 className="text-lg font-semibold">Upload or Enter Content</h2>
-                    <p className="text-sm text-muted-foreground">
-                      {requiresFileUpload
-                        ? 'Upload a file to convert'
-                        : 'Upload a file or paste content directly'}
-                    </p>
-                  </div>
-
-                  {/* File Uploader */}
-                  <FileUploader
-                    sourceType={state.context.sourceType}
-                    onFileSelect={handleFileSelect}
-                    selectedFile={state.context.file}
-                    onClear={handleFileClear}
-                  />
-
-                  {/* Text Input (for non-binary formats) */}
-                  {!requiresFileUpload && !state.context.file && (
-                    <>
-                      <div className="relative">
-                        <div className="absolute inset-0 flex items-center">
-                          <span className="w-full border-t" />
-                        </div>
-                        <div className="relative flex justify-center text-xs uppercase">
-                          <span className="bg-background px-2 text-muted-foreground">
-                            Or paste content
-                          </span>
-                        </div>
-                      </div>
-                      <TextInput
-                        sourceType={state.context.sourceType}
-                        value={state.context.textContent}
-                        onChange={handleTextChange}
-                      />
-                    </>
-                  )}
-                </div>
               )}
 
               {/* Processing */}
@@ -355,37 +236,32 @@ export function ImportWizard({ initialSourceType }: ImportWizardProps) {
           </Card>
 
           {/* Navigation buttons */}
-          {!state.matches('processing') && !state.matches('saving') && !state.matches('error') && (
-            <div className="flex justify-between">
-              <Button
-                variant="outline"
-                onClick={handleBack}
-                disabled={!canGoBack || state.matches('idle')}
-              >
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back
-              </Button>
+          {!state.matches('processing') &&
+            !state.matches('saving') &&
+            !state.matches('error') &&
+            !state.matches('inputContent') && (
+              <div className="flex justify-between">
+                <Button variant="outline" onClick={handleBack} disabled={!canGoBack}>
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back
+                </Button>
 
-              <div className="flex gap-2">
-                {state.matches('idle') && (
-                  <Button variant="outline" onClick={() => router.push('/contracts')}>
-                    Cancel
-                  </Button>
-                )}
-
-                {(state.matches('selectSource') || state.matches('inputContent')) && (
-                  <Button onClick={handleProcess} disabled={!canProcess}>
-                    Convert to OpenAPI
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                )}
-
-                {(state.matches('preview') || state.matches('editing')) && (
-                  <Button variant="outline" onClick={handleRetry}>
-                    Regenerate
-                  </Button>
-                )}
+                <div className="flex gap-2">
+                  {(state.matches('preview') || state.matches('editing')) && (
+                    <Button variant="outline" onClick={handleRetry}>
+                      Regenerate
+                    </Button>
+                  )}
+                </div>
               </div>
+            )}
+
+          {/* Cancel button on input screen */}
+          {state.matches('inputContent') && (
+            <div className="flex justify-start">
+              <Button variant="outline" onClick={() => router.push('/contracts')}>
+                Cancel
+              </Button>
             </div>
           )}
         </div>

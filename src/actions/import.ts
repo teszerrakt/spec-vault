@@ -2,7 +2,12 @@
 
 import { auth } from '@/auth'
 import { checkAIAvailability, convertToOpenAPI, refineOpenAPISpec } from '@/lib/ai/converter'
-import { createImportSourceFromText, processImport, validateFileSize } from '@/lib/import'
+import {
+  createImportSourceFromText,
+  detectSourceType,
+  processImport,
+  validateFileSize,
+} from '@/lib/import'
 import { arrayBufferToBase64 } from '@/lib/import/image-processor'
 import type { ConversionResult, ImportSourceType } from '@/types/import'
 
@@ -68,7 +73,7 @@ export async function processImageImportAction(
   try {
     // Validate size (base64 is ~33% larger than binary)
     const approximateSize = (base64Data.length * 3) / 4
-    const sizeValidation = validateFileSize(approximateSize, 'image')
+    const sizeValidation = validateFileSize(approximateSize)
     if (!sizeValidation.valid) {
       return {
         yaml: '',
@@ -156,7 +161,6 @@ export async function processFileImportAction(formData: FormData): Promise<Conve
 
   try {
     const file = formData.get('file') as File | null
-    const sourceType = formData.get('sourceType') as ImportSourceType | null
 
     if (!file) {
       return {
@@ -168,18 +172,11 @@ export async function processFileImportAction(formData: FormData): Promise<Conve
       }
     }
 
-    if (!sourceType) {
-      return {
-        yaml: '',
-        isValid: false,
-        errors: ['Source type not specified'],
-        model: 'none',
-        processingTimeMs: 0,
-      }
-    }
+    // Auto-detect source type from file
+    const sourceType = detectSourceType(file.name, file.type)
 
     // Validate file size
-    const sizeValidation = validateFileSize(file.size, sourceType)
+    const sizeValidation = validateFileSize(file.size)
     if (!sizeValidation.valid) {
       return {
         yaml: '',

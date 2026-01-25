@@ -20,6 +20,19 @@ import { Textarea } from '@/components/ui/textarea'
 import { getMetaKeyDisplay, useKeyboardShortcut } from '@/hooks/use-keyboard-shortcut'
 import { PRDialog } from './pr-dialog'
 
+/**
+ * Ensure file path ends with .yaml or .yml extension.
+ * If no extension, automatically appends .yaml
+ */
+function ensureYamlExtension(path: string): string {
+  const trimmed = path.trim()
+  if (!trimmed) return trimmed
+  if (trimmed.endsWith('.yaml') || trimmed.endsWith('.yml')) {
+    return trimmed
+  }
+  return `${trimmed}.yaml`
+}
+
 // NOTE: Save modes for future role-based settings implementation
 // 'direct' - Save directly to main branch (hidden for now)
 // 'review' - Submit for review via PR (default)
@@ -90,9 +103,10 @@ export function SaveDialog({
     }
 
     setIsSaving(true)
+    const finalPath = ensureYamlExtension(targetPath)
 
     try {
-      const result = await saveContract(targetPath.trim(), content, commitMessage.trim())
+      const result = await saveContract(finalPath, content, commitMessage.trim())
 
       if (result.success) {
         toast.success('Contract saved successfully', {
@@ -120,6 +134,9 @@ export function SaveDialog({
       toast.error('Please enter a file path')
       return
     }
+    // Ensure path has .yaml extension before proceeding
+    const finalPath = ensureYamlExtension(targetPath)
+    setFilePath(finalPath)
     // Close save dialog and open PR dialog
     onOpenChange(false)
     setShowPRDialog(true)
@@ -173,7 +190,7 @@ export function SaveDialog({
                   disabled={isSaving}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Path within the contracts directory (must end in .yaml or .yml)
+                  Path within the contracts directory (.yaml added automatically)
                 </p>
               </div>
             )}

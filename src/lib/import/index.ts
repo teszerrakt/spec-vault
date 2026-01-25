@@ -5,89 +5,68 @@ import type {
   ImportSourceType,
   ParsedImportSource,
 } from '@/types/import'
-import { parseCsvSource } from './csv-parser'
-import { parseExcelSource } from './excel-parser'
 import { arrayBufferToBase64, processImageSource } from './image-processor'
-import { parseJsonSource } from './json-parser'
 
 /**
- * File size limits per type (in bytes).
+ * Accepted file extensions for upload.
+ * No Excel due to multi-tab complexity - AI handles text formats directly.
  */
-export const FILE_SIZE_LIMITS: Record<ImportSourceType, number> = {
-  json: 10 * 1024 * 1024, // 10MB
-  csv: 10 * 1024 * 1024, // 10MB
-  excel: 25 * 1024 * 1024, // 25MB
-  image: 10 * 1024 * 1024, // 10MB
-  text: 10 * 1024 * 1024, // 10MB
-}
+export const ACCEPTED_EXTENSIONS = '.json,.csv,.png,.jpg,.jpeg,.gif,.webp,.txt,.md'
 
 /**
- * MIME type to source type mapping.
+ * Maximum file size (10MB for all types).
  */
-export const MIME_TYPE_MAP: Record<string, ImportSourceType> = {
-  'application/json': 'json',
-  'text/csv': 'csv',
-  'application/vnd.ms-excel': 'excel',
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'excel',
-  'image/jpeg': 'image',
-  'image/png': 'image',
-  'image/gif': 'image',
-  'image/webp': 'image',
-  'text/plain': 'text',
-}
+export const MAX_FILE_SIZE = 10 * 1024 * 1024
 
 /**
- * File extension to source type mapping.
+ * MIME types that should be treated as images.
  */
-export const EXTENSION_MAP: Record<string, ImportSourceType> = {
-  '.json': 'json',
-  '.csv': 'csv',
-  '.xls': 'excel',
-  '.xlsx': 'excel',
-  '.jpg': 'image',
-  '.jpeg': 'image',
-  '.png': 'image',
-  '.gif': 'image',
-  '.webp': 'image',
-  '.txt': 'text',
-  '.md': 'text',
+const IMAGE_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
+
+/**
+ * File extensions that should be treated as images.
+ */
+const IMAGE_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.gif', '.webp'])
+
+/**
+ * Detect if content is an image based on file name or MIME type.
+ */
+export function isImageSource(fileName?: string, mimeType?: string): boolean {
+  if (mimeType && IMAGE_MIME_TYPES.has(mimeType)) {
+    return true
+  }
+
+  if (fileName) {
+    const ext = `.${fileName.split('.').pop()?.toLowerCase()}`
+    if (IMAGE_EXTENSIONS.has(ext)) {
+      return true
+    }
+  }
+
+  return false
 }
 
 /**
  * Detect source type from file name or MIME type.
+ * Returns 'image' for image files, 'text' for everything else.
  */
-export function detectSourceType(fileName?: string, mimeType?: string): ImportSourceType | null {
-  // Try MIME type first
-  if (mimeType && mimeType in MIME_TYPE_MAP) {
-    return MIME_TYPE_MAP[mimeType]
-  }
-
-  // Fall back to file extension
-  if (fileName) {
-    const ext = `.${fileName.split('.').pop()?.toLowerCase()}`
-    if (ext in EXTENSION_MAP) {
-      return EXTENSION_MAP[ext]
-    }
-  }
-
-  return null
+export function detectSourceType(fileName?: string, mimeType?: string): ImportSourceType {
+  return isImageSource(fileName, mimeType) ? 'image' : 'text'
 }
 
 /**
- * Validate file size against limits.
+ * Validate file size.
  */
 export function validateFileSize(
   size: number,
-  sourceType: ImportSourceType
+  _sourceType?: ImportSourceType
 ): { valid: boolean; error?: string } {
-  const limit = FILE_SIZE_LIMITS[sourceType]
-
-  if (size > limit) {
-    const limitMB = limit / (1024 * 1024)
+  if (size > MAX_FILE_SIZE) {
     const sizeMB = (size / (1024 * 1024)).toFixed(2)
+    const limitMB = MAX_FILE_SIZE / (1024 * 1024)
     return {
       valid: false,
-      error: `File size (${sizeMB}MB) exceeds maximum allowed size for ${sourceType} files (${limitMB}MB)`,
+      error: `File size (${sizeMB}MB) exceeds maximum allowed size (${limitMB}MB)`,
     }
   }
 
@@ -98,26 +77,11 @@ export function validateFileSize(
  * Parse an import source based on its type.
  */
 export function parseImportSource(source: ImportSource): ParsedImportSource {
-  switch (source.type) {
-    case 'json':
-      return parseJsonSource(source)
-    case 'csv':
-      return parseCsvSource(source)
-    case 'excel':
-      return parseExcelSource(source)
-    case 'image':
-      return processImageSource(source)
-    case 'text':
-      return parseTextSource(source)
-    default:
-      throw new Error(`Unsupported source type: ${source.type}`)
+  if (source.type === 'image') {
+    return processImageSource(source)
   }
-}
 
-/**
- * Parse plain text source.
- */
-function parseTextSource(source: ImportSource): ParsedImportSource {
+  // For text, just pass through
   const content =
     typeof source.content === 'string' ? source.content : new TextDecoder().decode(source.content)
 
@@ -138,7 +102,7 @@ export async function processImport(source: ImportSource): Promise<ConversionRes
       ? new TextEncoder().encode(source.content).length
       : source.content.byteLength
 
-  const sizeValidation = validateFileSize(contentSize, source.type)
+  const sizeValidation = validateFileSize(contentSize)
   if (!sizeValidation.valid) {
     return {
       yaml: '',
@@ -152,7 +116,7 @@ export async function processImport(source: ImportSource): Promise<ConversionRes
   // Parse the source
   const parsed = parseImportSource(source)
 
-  // Handle image sources differently - need base64 for vision
+  // Handle image sources - need base64 for vision
   if (source.type === 'image') {
     const buffer = typeof source.content === 'string' ? null : source.content
     if (!buffer) {
@@ -172,9 +136,9 @@ export async function processImport(source: ImportSource): Promise<ConversionRes
     })
   }
 
-  // For all other types, use text content
+  // For text, send to AI directly
   return convertToOpenAPI({
-    sourceType: source.type,
+    sourceType: 'text',
     textContent: parsed.textContent,
   })
 }
@@ -185,16 +149,11 @@ export async function processImport(source: ImportSource): Promise<ConversionRes
 export async function createImportSourceFromFile(file: File): Promise<ImportSource> {
   const sourceType = detectSourceType(file.name, file.type)
 
-  if (!sourceType) {
-    throw new Error(`Unsupported file type: ${file.type || file.name}`)
-  }
-
   // Read file content
   const buffer = await file.arrayBuffer()
 
-  // For text-based formats, convert to string
-  const isTextBased = ['json', 'csv', 'text'].includes(sourceType)
-  const content = isTextBased ? new TextDecoder().decode(buffer) : buffer
+  // For text formats, convert to string
+  const content = sourceType === 'text' ? new TextDecoder().decode(buffer) : buffer
 
   return {
     type: sourceType,
@@ -218,35 +177,15 @@ export function createImportSourceFromText(
 }
 
 /**
- * Get human-readable description of a source type.
- */
-export function getSourceTypeDescription(type: ImportSourceType): string {
-  switch (type) {
-    case 'json':
-      return 'JSON file (API responses, schemas, or partial OpenAPI specs)'
-    case 'csv':
-      return 'CSV file (endpoint lists, schema definitions, or data samples)'
-    case 'excel':
-      return 'Excel file (spreadsheets with API documentation)'
-    case 'image':
-      return 'Image file (screenshots of API docs, diagrams)'
-    case 'text':
-      return 'Plain text (informal API descriptions, requirements)'
-    default:
-      return 'Unknown file type'
-  }
-}
-
-/**
  * Get accepted MIME types for file input.
  */
 export function getAcceptedMimeTypes(): string {
-  return Object.keys(MIME_TYPE_MAP).join(',')
+  return 'application/json,text/csv,text/plain,text/markdown,image/jpeg,image/png,image/gif,image/webp'
 }
 
 /**
  * Get accepted file extensions for file input.
  */
 export function getAcceptedExtensions(): string {
-  return Object.keys(EXTENSION_MAP).join(',')
+  return ACCEPTED_EXTENSIONS
 }

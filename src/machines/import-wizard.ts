@@ -1,13 +1,14 @@
 import { assign, fromPromise, setup } from 'xstate'
 import { processImageImportAction, processImportAction } from '@/actions/import'
+import { detectSourceType } from '@/lib/import'
 import type { ConversionResult, ImportSourceType } from '@/types/import'
 
 /**
  * Import wizard context - all state data.
  */
 export interface ImportWizardContext {
-  /** Selected source type */
-  sourceType: ImportSourceType | null
+  /** Detected source type (auto-detected from file or defaults to 'text') */
+  sourceType: ImportSourceType
   /** File object if uploaded */
   file: File | null
   /** Text content if entered manually */
@@ -32,9 +33,9 @@ export interface ImportWizardContext {
  * Import wizard events.
  */
 export type ImportWizardEvent =
-  | { type: 'SELECT_SOURCE'; sourceType: ImportSourceType }
   | { type: 'UPLOAD_FILE'; file: File }
   | { type: 'ENTER_TEXT'; text: string }
+  | { type: 'CLEAR_FILE' }
   | { type: 'PROCESS' }
   | { type: 'BACK' }
   | { type: 'EDIT_SPEC'; yaml: string }
@@ -47,7 +48,7 @@ export type ImportWizardEvent =
  * Initial context for the wizard.
  */
 const initialContext: ImportWizardContext = {
-  sourceType: null,
+  sourceType: 'text',
   file: null,
   textContent: '',
   generatedYaml: '',
@@ -118,9 +119,9 @@ const processImportActor = fromPromise<
 /**
  * Import wizard state machine.
  *
- * Flow:
- * idle → selectSource → inputContent → processing → preview → (editing) → saving → complete
- *                                                  ↘ error
+ * Simplified 3-step flow:
+ * inputContent → processing → preview → (editing) → saving → complete
+ *                          ↘ error
  */
 export const importWizardMachine = setup({
   types: {
@@ -139,77 +140,34 @@ export const importWizardMachine = setup({
   },
 }).createMachine({
   id: 'importWizard',
-  initial: 'idle',
+  initial: 'inputContent',
   context: initialContext,
   states: {
-    idle: {
-      on: {
-        SELECT_SOURCE: {
-          target: 'selectSource',
-          actions: assign({
-            sourceType: ({ event }) => event.sourceType,
-          }),
-        },
-      },
-    },
-
-    selectSource: {
-      on: {
-        SELECT_SOURCE: {
-          actions: assign({
-            sourceType: ({ event }) => event.sourceType,
-            // Clear previous content when changing source type
-            file: null,
-            textContent: '',
-          }),
-        },
-        UPLOAD_FILE: {
-          actions: assign({
-            file: ({ event }) => event.file,
-          }),
-        },
-        ENTER_TEXT: {
-          actions: assign({
-            textContent: ({ event }) => event.text,
-          }),
-        },
-        PROCESS: {
-          target: 'processing',
-          guard: 'hasContent',
-        },
-        BACK: {
-          target: 'idle',
-          actions: assign({
-            sourceType: null,
-          }),
-        },
-      },
-    },
-
     inputContent: {
       on: {
         UPLOAD_FILE: {
           actions: assign({
             file: ({ event }) => event.file,
             textContent: '', // Clear text if file is uploaded
+            sourceType: ({ event }) => detectSourceType(event.file.name, event.file.type),
+          }),
+        },
+        CLEAR_FILE: {
+          actions: assign({
+            file: null,
+            sourceType: 'text',
           }),
         },
         ENTER_TEXT: {
           actions: assign({
             textContent: ({ event }) => event.text,
             file: null, // Clear file if text is entered
+            sourceType: 'text',
           }),
         },
         PROCESS: {
           target: 'processing',
           guard: 'hasContent',
-        },
-        BACK: {
-          target: 'selectSource',
-          actions: assign({
-            file: null,
-            textContent: '',
-          }),
         },
       },
     },
@@ -219,7 +177,7 @@ export const importWizardMachine = setup({
         id: 'processImport',
         src: 'processImport',
         input: ({ context }) => ({
-          sourceType: context.sourceType!,
+          sourceType: context.sourceType,
           file: context.file,
           textContent: context.textContent,
         }),
@@ -319,7 +277,7 @@ export const importWizardMachine = setup({
           }),
         },
         RESET: {
-          target: 'idle',
+          target: 'inputContent',
           actions: assign(initialContext),
         },
       },
@@ -331,7 +289,7 @@ export const importWizardMachine = setup({
   },
   on: {
     RESET: {
-      target: '.idle',
+      target: '.inputContent',
       actions: assign(initialContext),
     },
   },
@@ -341,8 +299,6 @@ export const importWizardMachine = setup({
  * Type helper for the state value.
  */
 export type ImportWizardState =
-  | 'idle'
-  | 'selectSource'
   | 'inputContent'
   | 'processing'
   | 'preview'
@@ -356,12 +312,8 @@ export type ImportWizardState =
  */
 export function getStepName(state: ImportWizardState): string {
   switch (state) {
-    case 'idle':
-      return 'Start'
-    case 'selectSource':
-      return 'Select Source'
     case 'inputContent':
-      return 'Upload Content'
+      return 'Input'
     case 'processing':
       return 'Processing'
     case 'preview':
@@ -383,13 +335,7 @@ export function getStepName(state: ImportWizardState): string {
  * Get step number (1-indexed).
  */
 export function getStepNumber(state: ImportWizardState): number {
-  const steps: ImportWizardState[] = [
-    'selectSource',
-    'inputContent',
-    'processing',
-    'preview',
-    'saving',
-  ]
+  const steps: ImportWizardState[] = ['inputContent', 'processing', 'preview', 'saving']
   const index = steps.indexOf(state)
   return index === -1 ? 0 : index + 1
 }
@@ -398,5 +344,5 @@ export function getStepNumber(state: ImportWizardState): number {
  * Get total number of steps.
  */
 export function getTotalSteps(): number {
-  return 5
+  return 3 // Input → Processing → Preview/Save
 }

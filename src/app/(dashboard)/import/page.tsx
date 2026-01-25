@@ -8,21 +8,12 @@ export const metadata: Metadata = {
   description: 'Import and convert API documentation to OpenAPI specification',
 }
 
-interface ImportPageProps {
-  searchParams: Promise<{
-    type?: string
-  }>
-}
-
-export default async function ImportPage({ searchParams }: ImportPageProps) {
+export default async function ImportPage() {
   const session = await auth()
 
   if (!session) {
     redirect('/login')
   }
 
-  const params = await searchParams
-  const sourceType = params.type as 'json' | 'csv' | 'excel' | 'image' | 'text' | undefined
-
-  return <ImportWizard initialSourceType={sourceType} />
+  return <ImportWizard />
 }

@@ -1,5 +1,3 @@
-import type { DiffOutcome } from 'openapi-diff'
-import openapiDiff from 'openapi-diff'
 import type { Change, ChangelogEntry } from '@/types'
 import {
   categorizeChange,
@@ -21,6 +19,15 @@ interface DiffResult {
 }
 
 /**
+ * Lazily load openapi-diff to reduce initial bundle size.
+ * This library is only needed when comparing spec versions.
+ */
+async function getOpenApiDiff() {
+  const { default: openapiDiff } = await import('openapi-diff')
+  return openapiDiff
+}
+
+/**
  * Compare two OpenAPI specifications and generate a changelog.
  *
  * @param fromYaml - The source/older specification (YAML or JSON string)
@@ -37,10 +44,9 @@ export async function generateChangelog(
   fromVersion: string,
   toVersion: string
 ): Promise<ChangelogEntry> {
-  let diffResult: DiffOutcome
-
   try {
-    diffResult = await openapiDiff.diffSpecs({
+    const openapiDiff = await getOpenApiDiff()
+    const diffResult = await openapiDiff.diffSpecs({
       sourceSpec: {
         content: fromYaml,
         location: `${contractPath}@${fromVersion.slice(0, 7)}`,
@@ -52,6 +58,56 @@ export async function generateChangelog(
         format: 'openapi3',
       },
     })
+
+    // Handle failure case
+    if (!diffResult.breakingDifferencesFound && diffResult.breakingDifferencesFound !== false) {
+      // This means diffSpecs returned an error/invalid result
+      return {
+        fromVersion,
+        toVersion,
+        contractPath,
+        changes: [],
+        summary: 'Unable to generate changelog: Invalid diff result',
+        breakingChanges: false,
+      }
+    }
+
+    // Collect all changes
+    const changes: Change[] = []
+
+    // Process breaking differences
+    if (diffResult.breakingDifferencesFound && 'breakingDifferences' in diffResult) {
+      for (const diff of diffResult.breakingDifferences) {
+        changes.push(mapDiffToChange(diff as DiffResult, true))
+      }
+    }
+
+    // Process non-breaking differences
+    if ('nonBreakingDifferences' in diffResult) {
+      for (const diff of diffResult.nonBreakingDifferences) {
+        changes.push(mapDiffToChange(diff as DiffResult, false))
+      }
+    }
+
+    // Process unclassified differences (treat as non-breaking by default)
+    if ('unclassifiedDifferences' in diffResult) {
+      for (const diff of diffResult.unclassifiedDifferences) {
+        changes.push(mapDiffToChange(diff as DiffResult, false))
+      }
+    }
+
+    // Generate summary
+    const summary = formatChangeSummary(changes)
+    const breakingChanges = diffResult.breakingDifferencesFound
+
+    return {
+      fromVersion,
+      toVersion,
+      contractPath,
+      changes,
+      summary,
+      breakingChanges,
+    }
   } catch (error) {
     // If openapi-diff fails, return empty changelog with error info
     console.error('openapi-diff error:', error)
@@ -63,39 +119,6 @@ export async function generateChangelog(
       summary: `Unable to generate changelog: ${error instanceof Error ? error.message : 'Unknown error'}`,
       breakingChanges: false,
     }
-  }
-
-  // Collect all changes
-  const changes: Change[] = []
-
-  // Process breaking differences
-  if (diffResult.breakingDifferencesFound) {
-    for (const diff of diffResult.breakingDifferences) {
-      changes.push(mapDiffToChange(diff as DiffResult, true))
-    }
-  }
-
-  // Process non-breaking differences
-  for (const diff of diffResult.nonBreakingDifferences) {
-    changes.push(mapDiffToChange(diff as DiffResult, false))
-  }
-
-  // Process unclassified differences (treat as non-breaking by default)
-  for (const diff of diffResult.unclassifiedDifferences) {
-    changes.push(mapDiffToChange(diff as DiffResult, false))
-  }
-
-  // Generate summary
-  const summary = formatChangeSummary(changes)
-  const breakingChanges = diffResult.breakingDifferencesFound
-
-  return {
-    fromVersion,
-    toVersion,
-    contractPath,
-    changes,
-    summary,
-    breakingChanges,
   }
 }
 
@@ -128,6 +151,7 @@ function mapDiffToChange(diff: DiffResult, breaking: boolean): Change {
  */
 export async function hasChanges(fromYaml: string, toYaml: string): Promise<boolean> {
   try {
+    const openapiDiff = await getOpenApiDiff()
     const diffResult = await openapiDiff.diffSpecs({
       sourceSpec: {
         content: fromYaml,
@@ -141,11 +165,14 @@ export async function hasChanges(fromYaml: string, toYaml: string): Promise<bool
       },
     })
 
-    return (
-      diffResult.breakingDifferencesFound ||
-      diffResult.nonBreakingDifferences.length > 0 ||
-      diffResult.unclassifiedDifferences.length > 0
-    )
+    // Check if there are any differences
+    const hasBreaking = diffResult.breakingDifferencesFound
+    const hasNonBreaking =
+      'nonBreakingDifferences' in diffResult && diffResult.nonBreakingDifferences.length > 0
+    const hasUnclassified =
+      'unclassifiedDifferences' in diffResult && diffResult.unclassifiedDifferences.length > 0
+
+    return hasBreaking || hasNonBreaking || hasUnclassified
   } catch {
     // If we can't diff, assume there are changes
     return true

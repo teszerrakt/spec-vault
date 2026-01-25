@@ -2,14 +2,10 @@
 
 import { useCallback, useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import type { ImportSourceType } from '@/types/import'
 
 interface TextInputProps {
-  /** Source type for context hints */
-  sourceType: ImportSourceType
   /** Current text value */
   value: string
   /** Callback when text changes */
@@ -20,47 +16,20 @@ interface TextInputProps {
   placeholder?: string
 }
 
-const placeholders: Record<ImportSourceType, string> = {
-  json: `{
-  "endpoints": [
-    {
-      "method": "GET",
-      "path": "/users",
-      "description": "Get all users"
-    }
-  ]
-}`,
-  csv: `method,path,description
-GET,/users,Get all users
-POST,/users,Create a new user
-GET,/users/:id,Get user by ID`,
-  excel: 'Paste your spreadsheet data here...',
-  image: 'Images must be uploaded using the file uploader.',
-  text: `Describe your API here...
+const DEFAULT_PLACEHOLDER = `Paste your API description here...
 
-For example:
-- The Users API has endpoints for managing user accounts
-- GET /users returns a list of all users with pagination
-- POST /users creates a new user with name and email
-- GET /users/:id returns a specific user by ID
-- Authentication is done via Bearer token`,
-}
+Examples of what you can paste:
+• JSON API responses or schemas
+• CSV data with endpoints (method, path, description)
+• Plain text descriptions of your API
+• Markdown documentation
 
-const hints: Record<ImportSourceType, string> = {
-  json: 'Paste JSON containing API responses, schemas, or partial OpenAPI specs',
-  csv: 'Paste CSV data with columns like method, path, description',
-  excel: 'For Excel files, use the file uploader instead',
-  image: 'For images, use the file uploader instead',
-  text: 'Describe your API in natural language - include endpoints, methods, parameters, and responses',
-}
+The AI will analyze your content and generate an OpenAPI specification.`
 
-export function TextInput({
-  sourceType,
-  value,
-  onChange,
-  disabled = false,
-  placeholder,
-}: TextInputProps) {
+const HINT =
+  'Paste any format - JSON, CSV, plain text, or markdown. The AI will handle the conversion.'
+
+export function TextInput({ value, onChange, disabled = false, placeholder }: TextInputProps) {
   const [charCount, setCharCount] = useState(value.length)
 
   const handleChange = useCallback(
@@ -77,22 +46,7 @@ export function TextInput({
     onChange('')
   }, [onChange])
 
-  const effectivePlaceholder = placeholder || placeholders[sourceType]
-  const hint = hints[sourceType]
-
-  // For image source type, show a message to use file uploader
-  if (sourceType === 'image') {
-    return (
-      <Card className="border-dashed">
-        <CardHeader>
-          <CardTitle className="text-base">Image Upload Required</CardTitle>
-          <CardDescription>
-            Images cannot be pasted as text. Please use the file uploader to select an image file.
-          </CardDescription>
-        </CardHeader>
-      </Card>
-    )
-  }
+  const effectivePlaceholder = placeholder || DEFAULT_PLACEHOLDER
 
   return (
     <div className="space-y-4">
@@ -111,7 +65,7 @@ export function TextInput({
           disabled={disabled}
           className="min-h-[300px] font-mono text-sm"
         />
-        <p className="text-sm text-muted-foreground">{hint}</p>
+        <p className="text-sm text-muted-foreground">{HINT}</p>
       </div>
 
       {value.length > 0 && (
@@ -123,29 +77,4 @@ export function TextInput({
       )}
     </div>
   )
-}
-
-interface TextInputWithTabsProps {
-  sourceType: ImportSourceType
-  value: string
-  onChange: (text: string) => void
-  disabled?: boolean
-}
-
-/**
- * Combined input that shows either file uploader or text input based on source type.
- */
-export function ContentInput({
-  sourceType,
-  value,
-  onChange,
-  disabled = false,
-}: TextInputWithTabsProps) {
-  // For binary formats (excel, image), only show file uploader
-  if (sourceType === 'excel' || sourceType === 'image') {
-    return null // File uploader will be shown separately
-  }
-
-  // For text formats (json, csv, text), show text input
-  return <TextInput sourceType={sourceType} value={value} onChange={onChange} disabled={disabled} />
 }

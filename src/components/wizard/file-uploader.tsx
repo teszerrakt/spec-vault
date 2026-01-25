@@ -5,14 +5,10 @@ import { useCallback, useState } from 'react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { FILE_SIZE_LIMITS } from '@/lib/import'
+import { ACCEPTED_EXTENSIONS, MAX_FILE_SIZE } from '@/lib/import'
 import { cn } from '@/lib/utils'
-import type { ImportSourceType } from '@/types/import'
-import { getAcceptedTypes } from './source-selector'
 
 interface FileUploaderProps {
-  /** Source type for file filtering */
-  sourceType: ImportSourceType
   /** Callback when a file is uploaded */
   onFileSelect: (file: File) => void
   /** Currently selected file */
@@ -23,8 +19,9 @@ interface FileUploaderProps {
   disabled?: boolean
 }
 
+const MAX_SIZE_MB = MAX_FILE_SIZE / (1024 * 1024)
+
 export function FileUploader({
-  sourceType,
   onFileSelect,
   selectedFile,
   onClear,
@@ -33,32 +30,22 @@ export function FileUploader({
   const [isDragging, setIsDragging] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const acceptedTypes = getAcceptedTypes(sourceType)
-  const maxSize = FILE_SIZE_LIMITS[sourceType]
-  const maxSizeMB = maxSize / (1024 * 1024)
+  const validateFile = useCallback((file: File): string | null => {
+    // Check file size
+    if (file.size > MAX_FILE_SIZE) {
+      return `File size (${(file.size / (1024 * 1024)).toFixed(2)}MB) exceeds maximum (${MAX_SIZE_MB}MB)`
+    }
 
-  const validateFile = useCallback(
-    (file: File): string | null => {
-      // Check file size
-      if (file.size > maxSize) {
-        return `File size (${(file.size / (1024 * 1024)).toFixed(2)}MB) exceeds maximum (${maxSizeMB}MB)`
-      }
+    // Basic extension validation
+    const extension = `.${file.name.split('.').pop()?.toLowerCase()}`
+    const acceptedList = ACCEPTED_EXTENSIONS.split(',')
 
-      // Basic type validation - could be more sophisticated
-      const extension = `.${file.name.split('.').pop()?.toLowerCase()}`
-      const acceptedExtensions = acceptedTypes.split(',').filter((t) => t.startsWith('.'))
+    if (!acceptedList.some((ext) => extension === ext.toLowerCase())) {
+      return `File type not supported. Accepted: ${ACCEPTED_EXTENSIONS}`
+    }
 
-      if (
-        acceptedExtensions.length > 0 &&
-        !acceptedExtensions.some((ext) => extension === ext.toLowerCase())
-      ) {
-        return `File type not supported. Accepted: ${acceptedExtensions.join(', ')}`
-      }
-
-      return null
-    },
-    [acceptedTypes, maxSize, maxSizeMB]
-  )
+    return null
+  }, [])
 
   const handleFile = useCallback(
     (file: File) => {
@@ -171,13 +158,19 @@ export function FileUploader({
             <p className="font-medium">
               {isDragging ? 'Drop your file here' : 'Drag and drop your file here'}
             </p>
-            <p className="text-sm text-muted-foreground">or click to browse (max {maxSizeMB}MB)</p>
+            <p className="text-sm text-muted-foreground">
+              or click to browse (max {MAX_SIZE_MB}MB)
+            </p>
           </div>
+
+          <p className="text-xs text-muted-foreground">
+            Supported: .json, .csv, .txt, .md, .png, .jpg, .gif, .webp
+          </p>
 
           <label>
             <input
               type="file"
-              accept={acceptedTypes}
+              accept={ACCEPTED_EXTENSIONS}
               onChange={handleInputChange}
               disabled={disabled}
               className="hidden"
