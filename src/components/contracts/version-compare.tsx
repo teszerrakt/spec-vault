@@ -35,6 +35,8 @@ interface VersionCompareProps {
   initialFromVersion?: ContractVersion
   /** Initial "to" version (newer version to compare) - defaults to latest */
   initialToVersion?: ContractVersion
+  /** Whether to auto-compare when dialog opens (default: true) */
+  autoCompare?: boolean
 }
 
 /**
@@ -47,19 +49,18 @@ export function VersionCompare({
   versions,
   initialFromVersion,
   initialToVersion,
+  autoCompare = true,
 }: VersionCompareProps) {
   const latestVersion = versions[0]
-  const defaultFromVersion = initialFromVersion || versions[1] || versions[0]
-  const defaultToVersion = initialToVersion || latestVersion
 
-  const [fromSha, setFromSha] = useState(defaultFromVersion?.commitSha || '')
-  const [toSha, setToSha] = useState(defaultToVersion?.commitSha || '')
+  const [fromSha, setFromSha] = useState('')
+  const [toSha, setToSha] = useState('')
   const [changelog, setChangelog] = useState<ChangelogEntry | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Track if we should auto-compare on open
-  const hasAutoCompared = useRef(false)
+  // Track the previous open state to detect open transitions
+  const prevOpenRef = useRef(false)
 
   const handleCompare = useCallback(async (from: string, to: string) => {
     if (!from || !to) return
@@ -82,37 +83,29 @@ export function VersionCompare({
     }
   }, [contractPath])
 
-  // Auto-compare when dialog opens with initialFromVersion
+  // Initialize state and optionally auto-compare when dialog opens
   useEffect(() => {
-    if (open && initialFromVersion && !hasAutoCompared.current) {
-      const from = initialFromVersion.commitSha
-      const to = defaultToVersion?.commitSha || ''
-      if (from && to && from !== to) {
-        hasAutoCompared.current = true
-        setFromSha(from)
-        setToSha(to)
+    // Detect transition from closed to open
+    if (open && !prevOpenRef.current) {
+      // Calculate defaults
+      const defaultFrom = initialFromVersion || versions[1] || versions[0]
+      const defaultTo = initialToVersion || latestVersion
+
+      // Set initial values
+      const from = defaultFrom?.commitSha || ''
+      const to = defaultTo?.commitSha || ''
+      setFromSha(from)
+      setToSha(to)
+      setChangelog(null)
+      setError(null)
+
+      // Auto-compare if enabled and versions are different
+      if (autoCompare && from && to && from !== to) {
         handleCompare(from, to)
       }
     }
-    if (!open) {
-      hasAutoCompared.current = false
-    }
-  }, [open, initialFromVersion, defaultToVersion, handleCompare])
-
-  // Reset state when dialog opens
-  const handleOpenChange = useCallback(
-    (newOpen: boolean) => {
-      if (newOpen) {
-        // Reset to defaults when opening
-        setFromSha(defaultFromVersion?.commitSha || '')
-        setToSha(defaultToVersion?.commitSha || '')
-        setChangelog(null)
-        setError(null)
-      }
-      onOpenChange(newOpen)
-    },
-    [onOpenChange, defaultFromVersion, defaultToVersion]
-  )
+    prevOpenRef.current = open
+  }, [open, initialFromVersion, initialToVersion, versions, latestVersion, autoCompare, handleCompare])
 
   // Format version label for select - truncated version
   const formatVersionLabel = (version: ContractVersion, isLatest: boolean) => {
@@ -134,7 +127,7 @@ export function VersionCompare({
   }
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-4xl max-h-[85vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -152,10 +145,10 @@ export function VersionCompare({
             <div className="space-y-2">
               <Label htmlFor="from-version">From (older)</Label>
               <Select value={fromSha} onValueChange={setFromSha}>
-                <SelectTrigger id="from-version" className="truncate">
+                <SelectTrigger id="from-version" className="w-full">
                   <span className="truncate">{getSelectedLabel(fromSha)}</span>
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent position="popper" className="z-[100]">
                   {versions.map((v, i) => (
                     <SelectItem key={v.commitSha} value={v.commitSha}>
                       {formatVersionLabel(v, i === 0)}
@@ -168,10 +161,10 @@ export function VersionCompare({
             <div className="space-y-2">
               <Label htmlFor="to-version">To (newer)</Label>
               <Select value={toSha} onValueChange={setToSha}>
-                <SelectTrigger id="to-version" className="truncate">
+                <SelectTrigger id="to-version" className="w-full">
                   <span className="truncate">{getSelectedLabel(toSha)}</span>
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent position="popper" className="z-[100]">
                   {versions.map((v, i) => (
                     <SelectItem key={v.commitSha} value={v.commitSha}>
                       {formatVersionLabel(v, i === 0)}

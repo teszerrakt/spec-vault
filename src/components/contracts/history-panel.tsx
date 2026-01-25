@@ -25,6 +25,7 @@ export function HistoryPanel({ filePath, onSelectVersion }: HistoryPanelProps) {
   // Version comparison state
   const [compareOpen, setCompareOpen] = useState(false)
   const [compareFromVersion, setCompareFromVersion] = useState<ContractVersion | undefined>()
+  const [autoCompare, setAutoCompare] = useState(false)
 
   const fetchHistory = useCallback(async () => {
     setIsLoading(true)
@@ -58,12 +59,15 @@ export function HistoryPanel({ filePath, onSelectVersion }: HistoryPanelProps) {
 
   const handleCompareVersion = useCallback((version: ContractVersion) => {
     setCompareFromVersion(version)
+    setAutoCompare(true)
     setCompareOpen(true)
   }, [])
 
   const handleOpenCompareDialog = useCallback(() => {
     // Open compare dialog with second-to-last version as default "from"
+    // Don't auto-compare - let user pick versions freely
     setCompareFromVersion(versions[1])
+    setAutoCompare(false)
     setCompareOpen(true)
   }, [versions])
 
@@ -143,6 +147,7 @@ export function HistoryPanel({ filePath, onSelectVersion }: HistoryPanelProps) {
         versions={versions}
         initialFromVersion={compareFromVersion}
         initialToVersion={latestVersion}
+        autoCompare={autoCompare}
       />
     </>
   )
