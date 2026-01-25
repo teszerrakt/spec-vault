@@ -1,27 +1,32 @@
 'use client'
 
-import { useEffect, useCallback, useState, useRef } from 'react'
 import { useMachine } from '@xstate/react'
+import { Check, Database, Eye, FileCode2, Route, Server, Shield } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { Check, FileCode2, Server, Route, Database, Shield, Eye } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
+import type { SaveResult } from '@/actions/contracts'
+import { SaveDialog } from '@/components/contracts/save-dialog'
 import { Button } from '@/components/ui/button'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Kbd } from '@/components/ui/kbd'
-import { useKeyboardShortcut, getMetaKeyDisplay } from '@/hooks/use-keyboard-shortcut'
-import { editorWizardMachine, type EditorSection, getSectionName, getAllSections } from '@/machines/editor-wizard'
+import { Tabs, TabsContent } from '@/components/ui/tabs'
+import { getMetaKeyDisplay, useKeyboardShortcut } from '@/hooks/use-keyboard-shortcut'
+import { parseOpenAPI, serializeOpenAPI } from '@/lib/openapi/parser'
+import {
+  type EditorSection,
+  editorWizardMachine,
+  getAllSections,
+  getSectionName,
+} from '@/machines/editor-wizard'
+import type { OpenAPIObject } from '@/types'
 import { InfoEditor } from './info-editor'
-import { ServersEditor } from './servers-editor'
 import { PathsEditor } from './paths-editor'
+import { RawYamlViewer } from './raw-yaml-viewer'
+import { ReviewPanel } from './review-panel'
 import { SchemasEditor } from './schemas-editor'
 import { SecurityEditor } from './security-editor'
-import { ReviewPanel } from './review-panel'
-import { RawYamlViewer } from './raw-yaml-viewer'
+import { ServersEditor } from './servers-editor'
 import { ValidationErrorsBadge } from './validation-errors'
-import { SaveDialog } from '@/components/contracts/save-dialog'
-import { parseOpenAPI, serializeOpenAPI } from '@/lib/openapi/parser'
-import type { OpenAPIObject } from '@/types'
-import type { SaveResult } from '@/actions/contracts'
 
 interface EditorWizardProps {
   /** File path of the contract being edited */
@@ -53,8 +58,7 @@ export function EditorWizard({
   const [state, send] = useMachine(editorWizardMachine)
   const [saveDialogOpen, setSaveDialogOpen] = useState(false)
 
-  const { spec, yaml, currentSection, isValid, validationErrors, isDirty } =
-    state.context
+  const { spec, yaml, currentSection, isValid, validationErrors, isDirty } = state.context
 
   // Keyboard shortcut: Cmd/Ctrl + S to save
   useKeyboardShortcut({
@@ -85,7 +89,7 @@ export function EditorWizard({
       try {
         const parsed = parseOpenAPI(yaml) as OpenAPIObject
         send({ type: 'UPDATE_SPEC', spec: parsed })
-      } catch (e) {
+      } catch (_e) {
         // Invalid YAML, will be caught by validation
       }
     }
@@ -116,7 +120,7 @@ export function EditorWizard({
       try {
         const parsed = parseOpenAPI(newYaml) as OpenAPIObject
         send({ type: 'UPDATE_SPEC', spec: parsed })
-      } catch (e) {
+      } catch (_e) {
         // Invalid YAML, will be caught by validation
       }
     },
@@ -246,6 +250,7 @@ export function EditorWizard({
 
             return (
               <button
+                type="button"
                 key={section}
                 onClick={() => handleNavigate(section)}
                 className={`flex items-center gap-2 px-4 py-2 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
@@ -318,24 +323,14 @@ export function EditorWizard({
 
           {/* Navigation Buttons */}
           <div className="flex items-center justify-between mt-6 pt-6 border-t">
-            <Button
-              variant="outline"
-              onClick={handleBack}
-              disabled={currentIndex === 0}
-            >
+            <Button variant="outline" onClick={handleBack} disabled={currentIndex === 0}>
               Previous
             </Button>
 
             {currentSection !== 'review' ? (
-              <Button onClick={handleNext}>
-                Next
-              </Button>
+              <Button onClick={handleNext}>Next</Button>
             ) : (
-              <Button
-                onClick={handleSave}
-                disabled={!isValid || isValidating}
-                className="gap-2"
-              >
+              <Button onClick={handleSave} disabled={!isValid || isValidating} className="gap-2">
                 Save Specification
                 <Kbd className="ml-1">{getMetaKeyDisplay()}S</Kbd>
               </Button>
@@ -345,11 +340,7 @@ export function EditorWizard({
 
         {/* YAML Preview Panel */}
         <div className="lg:col-span-1">
-          <RawYamlViewer
-            yaml={yaml}
-            onChange={handleYamlChange}
-            readOnly={false}
-          />
+          <RawYamlViewer yaml={yaml} onChange={handleYamlChange} readOnly={false} />
         </div>
       </div>
     </div>

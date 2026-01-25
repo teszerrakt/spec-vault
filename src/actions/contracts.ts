@@ -1,11 +1,11 @@
 'use server'
 
 import { auth } from '@/auth'
-import { createConfiguredRepository } from '@/lib/repository'
 // Import directly from generator (server-only, uses Node.js modules)
 import { generateChangelog as generateChangelogFromSpecs } from '@/lib/changelog/generator'
-import type { APIContract, ChangelogEntry } from '@/types'
+import { createConfiguredRepository } from '@/lib/repository'
 import type { PaginatedResult } from '@/lib/repository/types'
+import type { APIContract, ChangelogEntry } from '@/types'
 
 /** Default number of contracts per page */
 const DEFAULT_PAGE_SIZE = 20
@@ -188,10 +188,7 @@ export async function saveContract(
  * @param commitMessage - Commit message
  * @returns Delete result
  */
-export async function deleteContract(
-  filePath: string,
-  commitMessage: string
-): Promise<SaveResult> {
+export async function deleteContract(filePath: string, commitMessage: string): Promise<SaveResult> {
   const session = await auth()
   if (!session?.accessToken) {
     return { success: false, error: 'Unauthorized - please sign in' }

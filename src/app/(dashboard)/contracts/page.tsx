@@ -1,7 +1,7 @@
 import { Suspense } from 'react'
 import { listContractsPaginated } from '@/actions/contracts'
-import { ContractsPageClient } from './contracts-client'
 import { PageLoading } from '@/components/ui/loading'
+import { ContractsPageClient } from './contracts-client'
 
 export const metadata = {
   title: 'Contracts | Spec Vault',
@@ -21,9 +21,7 @@ export default async function ContractsPage({ searchParams }: ContractsPageProps
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">API Contracts</h1>
-          <p className="text-muted-foreground">
-            Browse and manage your OpenAPI specifications
-          </p>
+          <p className="text-muted-foreground">Browse and manage your OpenAPI specifications</p>
         </div>
       </div>
 
@@ -35,7 +33,7 @@ export default async function ContractsPage({ searchParams }: ContractsPageProps
 }
 
 async function ContractsContent({ page }: { page: number }) {
-  const result = await listContractsPaginated({ 
+  const result = await listContractsPaginated({
     includeValidation: true,
     page,
     limit: 20,

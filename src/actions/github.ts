@@ -1,19 +1,24 @@
 'use server'
 
 import { auth } from '@/auth'
-import { createConfiguredRepository } from '@/lib/repository'
 import { generatePRContent } from '@/lib/ai/pr-generator'
+import { createConfiguredRepository } from '@/lib/repository'
 import {
   checkUserPermission,
-  isAdminPermission,
+  type GitHubBranch,
   getPlatformConfig,
+  isAdminPermission,
+  listBranches,
   savePlatformConfig,
   validateRepository,
-  listBranches,
-  type GitHubBranch,
 } from '@/lib/repository/github'
-import type { ContractVersion, PlatformConfig, RepositoryConfig, PermissionCheckResult } from '@/types'
 import type { PullRequestResult } from '@/lib/repository/types'
+import type {
+  ContractVersion,
+  PermissionCheckResult,
+  PlatformConfig,
+  RepositoryConfig,
+} from '@/types'
 
 /**
  * Result of the submit for review action.
@@ -85,13 +90,13 @@ function generateBranchName(filePath: string): string {
     .replace(/^-|-$/g, '')
     .toLowerCase()
     .slice(0, 30)
-  
+
   return `contract/${sanitizedPath}-${timestamp}`
 }
 
 /**
  * Submit a contract change for review via GitHub Pull Request.
- * 
+ *
  * This action:
  * 1. Creates a new branch from the default branch
  * 2. Commits the contract changes to the new branch
@@ -153,7 +158,7 @@ export async function submitForReview(
     }
   } catch (error) {
     console.error('Failed to submit for review:', error)
-    
+
     // Handle specific GitHub errors
     if (error instanceof Error) {
       if (error.message.includes('Reference already exists')) {
@@ -233,7 +238,7 @@ export async function createPullRequest(
 
 /**
  * Generate AI-powered PR title and description for a contract.
- * 
+ *
  * @param filePath - Path to the contract file
  * @param content - YAML content of the contract
  * @param isNew - Whether this is a new contract (vs update)
@@ -328,14 +333,9 @@ export async function getRepositorySettings(): Promise<GetSettingsResult> {
         error: 'Could not determine GitHub username. Please sign out and sign in again.',
       }
     }
-    
+
     // Check user's permission level
-    const permission = await checkUserPermission(
-      session.accessToken,
-      owner,
-      repo,
-      username
-    )
+    const permission = await checkUserPermission(session.accessToken, owner, repo, username)
 
     // Get platform config from repository
     const platformConfig = await getPlatformConfig(session.accessToken, owner, repo)
@@ -345,7 +345,8 @@ export async function getRepositorySettings(): Promise<GetSettingsResult> {
       owner,
       repo,
       defaultBranch: platformConfig.defaultBranch || process.env.GITHUB_DEFAULT_BRANCH || 'main',
-      contractsPath: platformConfig.contractsPath || process.env.GITHUB_CONTRACTS_PATH || 'contracts',
+      contractsPath:
+        platformConfig.contractsPath || process.env.GITHUB_CONTRACTS_PATH || 'contracts',
       version: platformConfig.version,
     }
 
@@ -417,12 +418,7 @@ export async function saveRepositorySettings(
     }
 
     // Check user's permission level
-    const permission = await checkUserPermission(
-      session.accessToken,
-      owner,
-      repo,
-      username
-    )
+    const permission = await checkUserPermission(session.accessToken, owner, repo, username)
 
     if (!isAdminPermission(permission)) {
       return {
@@ -432,12 +428,7 @@ export async function saveRepositorySettings(
     }
 
     // Save the config
-    const commitSha = await savePlatformConfig(
-      session.accessToken,
-      owner,
-      repo,
-      settings
-    )
+    const commitSha = await savePlatformConfig(session.accessToken, owner, repo, settings)
 
     return {
       success: true,
@@ -513,12 +504,7 @@ export async function validateRepositoryConnection(): Promise<ValidateConnection
       }
     }
 
-    const permission = await checkUserPermission(
-      session.accessToken,
-      owner,
-      repo,
-      username
-    )
+    const permission = await checkUserPermission(session.accessToken, owner, repo, username)
 
     const canRead = ['admin', 'maintain', 'write', 'triage', 'read'].includes(permission)
     const canWrite = ['admin', 'maintain', 'write'].includes(permission)

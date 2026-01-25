@@ -1,11 +1,11 @@
 'use client'
 
-import { useState } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
-import { Label } from '@/components/ui/label'
-import { Input } from '@/components/ui/input'
+import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import type { OpenAPIObject } from '@/types'
 
 interface Server {
@@ -120,9 +120,7 @@ export function ServersEditor({ spec, onChange }: ServersEditorProps) {
             <Card key={index}>
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-base">
-                    Server {index + 1}
-                  </CardTitle>
+                  <CardTitle className="text-base">Server {index + 1}</CardTitle>
                   <Button
                     variant="ghost"
                     size="icon"
@@ -145,7 +143,8 @@ export function ServersEditor({ spec, onChange }: ServersEditorProps) {
                     placeholder="https://api.example.com/v1"
                   />
                   <p className="text-xs text-muted-foreground">
-                    Use {'{variable}'} for URL variables (e.g., https://{'{environment}'}.api.example.com)
+                    Use {'{variable}'} for URL variables (e.g., https://{'{environment}'}
+                    .api.example.com)
                   </p>
                 </div>
 

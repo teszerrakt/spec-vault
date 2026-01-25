@@ -1,6 +1,6 @@
+import type { APIContract } from '@/types'
 import { ContractCard } from './contract-card'
 import { EmptyState } from './empty-state'
-import type { APIContract } from '@/types'
 
 interface ContractListProps {
   contracts: APIContract[]

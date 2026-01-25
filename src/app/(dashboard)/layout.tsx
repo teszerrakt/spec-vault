@@ -1,14 +1,10 @@
 import Link from 'next/link'
-import { auth, signOut } from '@/auth'
-import { Button } from '@/components/ui/button'
 import { redirect } from 'next/navigation'
+import { auth, signOut } from '@/auth'
 import { MobileBlock } from '@/components/mobile-block'
+import { Button } from '@/components/ui/button'
 
-export default async function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await auth()
 
   if (!session?.user) {

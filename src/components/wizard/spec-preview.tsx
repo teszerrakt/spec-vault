@@ -1,12 +1,12 @@
 'use client'
 
-import { useState, useCallback } from 'react'
-import { Copy, Check, Download, AlertCircle, CheckCircle, Edit, Save } from 'lucide-react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
+import { AlertCircle, Check, CheckCircle, Copy, Download, Edit, Save } from 'lucide-react'
+import { useCallback, useState } from 'react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Textarea } from '@/components/ui/textarea'
 
 interface SpecPreviewProps {
   /** Generated OpenAPI YAML */

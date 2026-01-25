@@ -1,6 +1,6 @@
-import { setup, assign, fromPromise } from 'xstate'
-import type { ImportSourceType, ConversionResult } from '@/types/import'
-import { processImportAction, processImageImportAction } from '@/actions/import'
+import { assign, fromPromise, setup } from 'xstate'
+import { processImageImportAction, processImportAction } from '@/actions/import'
+import type { ConversionResult, ImportSourceType } from '@/types/import'
 
 /**
  * Import wizard context - all state data.
@@ -340,7 +340,16 @@ export const importWizardMachine = setup({
 /**
  * Type helper for the state value.
  */
-export type ImportWizardState = 'idle' | 'selectSource' | 'inputContent' | 'processing' | 'preview' | 'editing' | 'saving' | 'error' | 'complete'
+export type ImportWizardState =
+  | 'idle'
+  | 'selectSource'
+  | 'inputContent'
+  | 'processing'
+  | 'preview'
+  | 'editing'
+  | 'saving'
+  | 'error'
+  | 'complete'
 
 /**
  * Get human-readable step name.
@@ -374,7 +383,13 @@ export function getStepName(state: ImportWizardState): string {
  * Get step number (1-indexed).
  */
 export function getStepNumber(state: ImportWizardState): number {
-  const steps: ImportWizardState[] = ['selectSource', 'inputContent', 'processing', 'preview', 'saving']
+  const steps: ImportWizardState[] = [
+    'selectSource',
+    'inputContent',
+    'processing',
+    'preview',
+    'saving',
+  ]
   const index = steps.indexOf(state)
   return index === -1 ? 0 : index + 1
 }

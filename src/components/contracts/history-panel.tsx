@@ -1,13 +1,13 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
-import { History, Loader2, RefreshCw, GitCompare } from 'lucide-react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { VersionList } from './version-list'
-import { VersionCompare } from './version-compare'
+import { GitCompare, History, Loader2, RefreshCw } from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
 import { getContractHistory } from '@/actions/github'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import type { ContractVersion } from '@/types'
+import { VersionCompare } from './version-compare'
+import { VersionList } from './version-list'
 
 interface HistoryPanelProps {
   /** File path of the contract */

@@ -1,9 +1,9 @@
 'use client'
 
-import { Label } from '@/components/ui/label'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import type { OpenAPIObject } from '@/types'
 
 interface InfoEditorProps {
@@ -28,9 +28,7 @@ export function InfoEditor({ spec, onChange }: InfoEditorProps) {
       <Card>
         <CardHeader>
           <CardTitle>Basic Information</CardTitle>
-          <CardDescription>
-            Define the core metadata for your API specification.
-          </CardDescription>
+          <CardDescription>Define the core metadata for your API specification.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
@@ -41,9 +39,7 @@ export function InfoEditor({ spec, onChange }: InfoEditorProps) {
               onChange={(e) => updateInfo('title', e.target.value)}
               placeholder="My API"
             />
-            <p className="text-sm text-muted-foreground">
-              A descriptive name for your API.
-            </p>
+            <p className="text-sm text-muted-foreground">A descriptive name for your API.</p>
           </div>
 
           <div className="space-y-2">
@@ -78,9 +74,7 @@ export function InfoEditor({ spec, onChange }: InfoEditorProps) {
       <Card>
         <CardHeader>
           <CardTitle>Contact Information</CardTitle>
-          <CardDescription>
-            Optional contact details for API support.
-          </CardDescription>
+          <CardDescription>Optional contact details for API support.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
@@ -141,9 +135,7 @@ export function InfoEditor({ spec, onChange }: InfoEditorProps) {
       <Card>
         <CardHeader>
           <CardTitle>License</CardTitle>
-          <CardDescription>
-            Specify the license for your API.
-          </CardDescription>
+          <CardDescription>Specify the license for your API.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
@@ -173,7 +165,7 @@ export function InfoEditor({ spec, onChange }: InfoEditorProps) {
                 onChange({
                   info: {
                     ...info,
-                    license: info.license?.name 
+                    license: info.license?.name
                       ? { ...info.license, url: e.target.value || undefined }
                       : undefined,
                   },
@@ -188,9 +180,7 @@ export function InfoEditor({ spec, onChange }: InfoEditorProps) {
       <Card>
         <CardHeader>
           <CardTitle>External Documentation</CardTitle>
-          <CardDescription>
-            Link to additional documentation resources.
-          </CardDescription>
+          <CardDescription>Link to additional documentation resources.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
@@ -201,7 +191,7 @@ export function InfoEditor({ spec, onChange }: InfoEditorProps) {
               value={spec?.externalDocs?.url || ''}
               onChange={(e) =>
                 onChange({
-                  externalDocs: e.target.value 
+                  externalDocs: e.target.value
                     ? { ...spec?.externalDocs, url: e.target.value }
                     : undefined,
                 })

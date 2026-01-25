@@ -32,7 +32,14 @@ export interface ParsedImportSource {
 /**
  * Import processing status.
  */
-export type ImportStatus = 'idle' | 'uploading' | 'parsing' | 'converting' | 'validating' | 'complete' | 'error'
+export type ImportStatus =
+  | 'idle'
+  | 'uploading'
+  | 'parsing'
+  | 'converting'
+  | 'validating'
+  | 'complete'
+  | 'error'
 
 /**
  * Result of the AI conversion process.

@@ -124,9 +124,11 @@ pnpm test               # Run Vitest unit tests
 pnpm test:e2e           # Run Playwright E2E tests
 
 # Code Quality
-pnpm lint               # ESLint
-pnpm tsc --noEmit       # TypeScript check
-pnpm format             # Prettier
+pnpm check               # Biome lint + format check
+pnpm check:fix           # Biome lint + format with auto-fix
+pnpm lint                # Biome lint only
+pnpm format              # Biome format only
+pnpm tsc --noEmit        # TypeScript check
 ```
 
 ## Authentication Flow

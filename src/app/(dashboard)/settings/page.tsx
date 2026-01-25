@@ -1,15 +1,9 @@
 import { Suspense } from 'react'
-import { getRepositorySettings, validateRepositoryConnection, getBranches } from '@/actions/github'
-import { RepositorySettings } from '@/components/settings/repository-settings'
+import { getBranches, getRepositorySettings, validateRepositoryConnection } from '@/actions/github'
 import { ConnectionSection } from '@/components/settings/connection-section'
+import { RepositorySettings } from '@/components/settings/repository-settings'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 
 export const metadata = {
@@ -44,7 +38,7 @@ async function SettingsContent() {
     )
   }
 
-  const branches = branchesResult.success ? branchesResult.branches ?? [] : []
+  const branches = branchesResult.success ? (branchesResult.branches ?? []) : []
 
   return (
     <div className="space-y-6">
@@ -70,9 +64,7 @@ async function SettingsContent() {
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <div className="space-y-1">
             <CardTitle>Connection Status</CardTitle>
-            <CardDescription>
-              Verify your access to the connected repository.
-            </CardDescription>
+            <CardDescription>Verify your access to the connected repository.</CardDescription>
           </div>
         </CardHeader>
         <CardContent>

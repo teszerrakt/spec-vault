@@ -1,6 +1,6 @@
 'use client'
 
-import { AlertCircle, XCircle, ChevronRight } from 'lucide-react'
+import { AlertCircle, ChevronRight, XCircle } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import type { ValidationError } from '@/types'
 
@@ -49,9 +49,10 @@ export function ValidationErrors({ errors, onNavigate }: ValidationErrorsProps) 
             <h4 className="text-sm font-medium text-red-700 mb-2 capitalize">{section}</h4>
             <div className="space-y-2">
               {sectionErrors.map((error, i) => (
-                <div
+                <button
+                  type="button"
                   key={i}
-                  className={`flex items-start gap-2 p-2 rounded text-sm cursor-pointer hover:bg-red-100/50 transition-colors ${
+                  className={`flex items-start gap-2 p-2 rounded text-sm cursor-pointer hover:bg-red-100/50 transition-colors w-full text-left ${
                     error.severity === 'error' ? 'text-red-600' : 'text-yellow-600'
                   }`}
                   onClick={() => onNavigate?.(error.path)}
@@ -65,10 +66,8 @@ export function ValidationErrors({ errors, onNavigate }: ValidationErrorsProps) 
                     <code className="text-xs bg-red-100 px-1 rounded">{error.path}</code>
                     <p className="mt-1 text-sm">{error.message}</p>
                   </div>
-                  {onNavigate && (
-                    <ChevronRight className="h-4 w-4 shrink-0 text-red-400" />
-                  )}
-                </div>
+                  {onNavigate && <ChevronRight className="h-4 w-4 shrink-0 text-red-400" />}
+                </button>
               ))}
             </div>
           </div>

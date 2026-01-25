@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
-import { Loader2, Sparkles, FileCode, CheckCircle } from 'lucide-react'
+import { CheckCircle, FileCode, Loader2, Sparkles } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { cn } from '@/lib/utils'
@@ -42,14 +42,21 @@ const stages = {
   },
 }
 
-export function ProcessingIndicator({ stage = 'analyzing', elapsedMs, isComplete = false }: ProcessingIndicatorProps) {
+export function ProcessingIndicator({
+  stage = 'analyzing',
+  elapsedMs,
+  isComplete = false,
+}: ProcessingIndicatorProps) {
   const [animatedProgress, setAnimatedProgress] = useState(() => (isComplete ? 100 : 0))
   const [dots, setDots] = useState('')
 
   const currentStage = stages[stage]
 
   // Calculate target progress based on state
-  const targetProgress = useMemo(() => (isComplete ? 100 : currentStage.progress), [isComplete, currentStage.progress])
+  const targetProgress = useMemo(
+    () => (isComplete ? 100 : currentStage.progress),
+    [isComplete, currentStage.progress]
+  )
 
   // Animate progress bar
   useEffect(() => {
@@ -70,7 +77,7 @@ export function ProcessingIndicator({ stage = 'analyzing', elapsedMs, isComplete
     if (isComplete) return
 
     const interval = setInterval(() => {
-      setDots((prev) => (prev.length >= 3 ? '' : prev + '.'))
+      setDots((prev) => (prev.length >= 3 ? '' : `${prev}.`))
     }, 500)
 
     return () => clearInterval(interval)

@@ -1,5 +1,5 @@
-import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import { notFound } from 'next/navigation'
 import { getContract } from '@/actions/contracts'
 import { EditorWizard } from '@/components/editor/editor-wizard'
 
@@ -40,10 +40,7 @@ export default async function EditContractPage({ params }: EditContractPageProps
       {/* Header */}
       <div>
         <div className="mb-1 flex items-center gap-2">
-          <Link
-            href="/contracts"
-            className="text-sm text-muted-foreground hover:text-foreground"
-          >
+          <Link href="/contracts" className="text-sm text-muted-foreground hover:text-foreground">
             Contracts
           </Link>
           <span className="text-muted-foreground">/</span>

@@ -105,7 +105,12 @@ export interface ContractRepository {
    * @param branch - Optional target branch (defaults to main branch)
    * @returns Save result with commit info
    */
-  saveContract(filePath: string, specOrYaml: OpenAPIObject | string, message: string, branch?: string): Promise<SaveResult>
+  saveContract(
+    filePath: string,
+    specOrYaml: OpenAPIObject | string,
+    message: string,
+    branch?: string
+  ): Promise<SaveResult>
 
   /**
    * Delete a contract from the repository.

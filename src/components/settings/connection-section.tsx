@@ -1,10 +1,10 @@
 'use client'
 
+import { CheckCircle2Icon, FileTextIcon, Loader2Icon, XCircleIcon } from 'lucide-react'
 import { useState, useTransition } from 'react'
-import { CheckCircle2Icon, XCircleIcon, Loader2Icon, FileTextIcon } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Alert, AlertDescription } from '@/components/ui/alert'
 import { validateRepositoryConnection } from '@/actions/github'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
 
 interface ConnectionSectionProps {
   initialStatus?: {

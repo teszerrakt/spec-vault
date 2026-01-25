@@ -1,12 +1,12 @@
 'use client'
 
-import { AlertTriangle, FileText, ArrowRight } from 'lucide-react'
+import { AlertTriangle, ArrowRight, FileText } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
+import { getCategoryLabel, groupChangesByCategory } from '@/lib/changelog/formatter'
+import type { ChangeCategory, ChangelogEntry } from '@/types'
 import { ChangeItem } from './change-item'
-import { groupChangesByCategory, getCategoryLabel } from '@/lib/changelog/formatter'
-import type { ChangelogEntry, ChangeCategory } from '@/types'
 
 interface ChangelogViewerProps {
   /** The changelog entry to display */
@@ -43,8 +43,8 @@ export function ChangelogViewer({ changelog, className }: ChangelogViewerProps) 
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Breaking Changes Detected</AlertTitle>
           <AlertDescription>
-            This update contains {breakingCount} breaking change{breakingCount === 1 ? '' : 's'} that may affect API
-            consumers. Please review carefully before deploying.
+            This update contains {breakingCount} breaking change{breakingCount === 1 ? '' : 's'}{' '}
+            that may affect API consumers. Please review carefully before deploying.
           </AlertDescription>
         </Alert>
       )}

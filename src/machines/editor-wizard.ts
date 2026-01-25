@@ -1,6 +1,5 @@
-import { setup, assign, fromPromise } from 'xstate'
-import type { OpenAPIObject } from '@/types'
-import type { ValidationError } from '@/types'
+import { assign, fromPromise, setup } from 'xstate'
+import type { OpenAPIObject, ValidationError } from '@/types'
 
 /**
  * Editor section type - each section of the OpenAPI spec that can be edited.
@@ -173,10 +172,11 @@ export const editorWizardMachine = setup({
           on: {
             UPDATE_SPEC: {
               actions: assign({
-                spec: ({ context, event }) => ({
-                  ...context.spec,
-                  ...event.spec,
-                } as OpenAPIObject),
+                spec: ({ context, event }) =>
+                  ({
+                    ...context.spec,
+                    ...event.spec,
+                  }) as OpenAPIObject,
                 isDirty: true,
               }),
             },
@@ -235,7 +235,8 @@ export const editorWizardMachine = setup({
                 validationErrors: ({ event }) => [
                   {
                     path: '/',
-                    message: event.error instanceof Error ? event.error.message : 'Validation failed',
+                    message:
+                      event.error instanceof Error ? event.error.message : 'Validation failed',
                     severity: 'error' as const,
                   },
                 ],

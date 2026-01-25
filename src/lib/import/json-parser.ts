@@ -1,4 +1,4 @@
-import type { ParsedImportSource, ImportSource } from '@/types/import'
+import type { ImportSource, ParsedImportSource } from '@/types/import'
 
 /**
  * Result of JSON parsing with structural analysis.
@@ -27,7 +27,10 @@ export function parseJsonContent(content: string): JsonParseResult {
     data,
     textRepresentation: generateTextRepresentation(data, structureType),
     structureType,
-    topLevelKeyCount: typeof data === 'object' && data !== null && !Array.isArray(data) ? Object.keys(data).length : undefined,
+    topLevelKeyCount:
+      typeof data === 'object' && data !== null && !Array.isArray(data)
+        ? Object.keys(data).length
+        : undefined,
     arrayLength: Array.isArray(data) ? data.length : undefined,
   }
 }
@@ -36,7 +39,8 @@ export function parseJsonContent(content: string): JsonParseResult {
  * Parse a JSON import source.
  */
 export function parseJsonSource(source: ImportSource): ParsedImportSource {
-  const content = typeof source.content === 'string' ? source.content : new TextDecoder().decode(source.content)
+  const content =
+    typeof source.content === 'string' ? source.content : new TextDecoder().decode(source.content)
 
   try {
     const result = parseJsonContent(content)
@@ -47,7 +51,9 @@ export function parseJsonSource(source: ImportSource): ParsedImportSource {
       structuredData: result.data,
     }
   } catch (error) {
-    throw new Error(`Failed to parse JSON: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    throw new Error(
+      `Failed to parse JSON: ${error instanceof Error ? error.message : 'Unknown error'}`
+    )
   }
 }
 
@@ -86,7 +92,10 @@ function detectStructureType(data: unknown): JsonParseResult['structureType'] {
 /**
  * Generate a human-readable text representation of the JSON.
  */
-function generateTextRepresentation(data: unknown, structureType: JsonParseResult['structureType']): string {
+function generateTextRepresentation(
+  data: unknown,
+  structureType: JsonParseResult['structureType']
+): string {
   const lines: string[] = []
 
   lines.push(`JSON Structure Type: ${structureType}`)
@@ -105,7 +114,7 @@ function generateTextRepresentation(data: unknown, structureType: JsonParseResul
   if (jsonStr.length > MAX_LENGTH) {
     lines.push('Note: JSON content truncated due to size.')
     lines.push('')
-    lines.push(jsonStr.slice(0, MAX_LENGTH) + '\n... (truncated)')
+    lines.push(`${jsonStr.slice(0, MAX_LENGTH)}\n... (truncated)`)
   } else {
     lines.push(jsonStr)
   }
@@ -125,7 +134,9 @@ export function extractEndpointsFromJson(data: unknown): string[] {
     }
 
     if (Array.isArray(obj)) {
-      obj.forEach((item, index) => traverse(item, [...path, `[${index}]`]))
+      for (let index = 0; index < obj.length; index++) {
+        traverse(obj[index], [...path, `[${index}]`])
+      }
       return
     }
 
@@ -134,15 +145,20 @@ export function extractEndpointsFromJson(data: unknown): string[] {
     // Look for URL-like keys or values
     for (const [key, value] of Object.entries(record)) {
       // Check if key looks like an HTTP method
-      if (['get', 'post', 'put', 'patch', 'delete', 'head', 'options'].includes(key.toLowerCase())) {
-        const pathStr = '/' + path.filter((p) => !p.startsWith('[')).join('/')
+      if (
+        ['get', 'post', 'put', 'patch', 'delete', 'head', 'options'].includes(key.toLowerCase())
+      ) {
+        const pathStr = `/${path.filter((p) => !p.startsWith('[')).join('/')}`
         if (!endpoints.includes(pathStr)) {
           endpoints.push(pathStr)
         }
       }
 
       // Check if key is 'path', 'endpoint', 'url', 'route'
-      if (['path', 'endpoint', 'url', 'route'].includes(key.toLowerCase()) && typeof value === 'string') {
+      if (
+        ['path', 'endpoint', 'url', 'route'].includes(key.toLowerCase()) &&
+        typeof value === 'string'
+      ) {
         if (value.startsWith('/') && !endpoints.includes(value)) {
           endpoints.push(value)
         }

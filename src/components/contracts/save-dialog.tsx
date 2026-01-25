@@ -1,8 +1,10 @@
 'use client'
 
-import { useState, useCallback } from 'react'
-import { Loader2, Save, GitPullRequest } from 'lucide-react'
+import { GitPullRequest, Loader2, Save } from 'lucide-react'
+import { useCallback, useState } from 'react'
 import { toast } from 'sonner'
+import { type SaveResult, saveContract } from '@/actions/contracts'
+import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
@@ -11,13 +13,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
 import { Kbd } from '@/components/ui/kbd'
-import { useKeyboardShortcut, getMetaKeyDisplay } from '@/hooks/use-keyboard-shortcut'
-import { saveContract, type SaveResult } from '@/actions/contracts'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import { getMetaKeyDisplay, useKeyboardShortcut } from '@/hooks/use-keyboard-shortcut'
 import { PRDialog } from './pr-dialog'
 
 // NOTE: Save modes for future role-based settings implementation
@@ -40,11 +40,11 @@ interface SaveDialogProps {
   isNew?: boolean
   /**
    * Whether to show the "Save Directly" option.
-   * 
+   *
    * TODO: This option is currently hidden pending role-based settings implementation.
    * When settings are available (Phase 9 - US7), this can be conditionally shown
    * based on user role (e.g., admins can save directly, others must submit for review).
-   * 
+   *
    * @default false - Hidden until role-based settings are implemented
    */
   showDirectSaveOption?: boolean
@@ -96,9 +96,7 @@ export function SaveDialog({
 
       if (result.success) {
         toast.success('Contract saved successfully', {
-          description: result.commitSha
-            ? `Commit: ${result.commitSha.slice(0, 7)}`
-            : undefined,
+          description: result.commitSha ? `Commit: ${result.commitSha.slice(0, 7)}` : undefined,
         })
         onOpenChange(false)
         setCommitMessage('')
@@ -258,8 +256,8 @@ export function SaveDialog({
             {(saveMode === 'review' || !showDirectSaveOption) && (
               <div className="rounded-lg border bg-muted/50 p-3">
                 <p className="text-sm text-muted-foreground">
-                  Your changes will be submitted as a pull request for team review.
-                  AI will help generate a descriptive title and summary.
+                  Your changes will be submitted as a pull request for team review. AI will help
+                  generate a descriptive title and summary.
                 </p>
               </div>
             )}
@@ -284,7 +282,11 @@ export function SaveDialog({
                 )}
               </Button>
             ) : (
-              <Button onClick={handleSubmitForReview} disabled={!targetPath?.trim()} className="gap-2">
+              <Button
+                onClick={handleSubmitForReview}
+                disabled={!targetPath?.trim()}
+                className="gap-2"
+              >
                 <GitPullRequest className="h-4 w-4" />
                 Continue
                 <Kbd className="ml-1">{getMetaKeyDisplay()}↵</Kbd>

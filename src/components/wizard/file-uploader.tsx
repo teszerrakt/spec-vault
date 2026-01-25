@@ -1,14 +1,14 @@
 'use client'
 
+import { AlertCircle, File, Upload, X } from 'lucide-react'
 import { useCallback, useState } from 'react'
-import { Upload, File, X, AlertCircle } from 'lucide-react'
-import type { ImportSourceType } from '@/types/import'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { cn } from '@/lib/utils'
-import { getAcceptedTypes } from './source-selector'
 import { FILE_SIZE_LIMITS } from '@/lib/import'
+import { cn } from '@/lib/utils'
+import type { ImportSourceType } from '@/types/import'
+import { getAcceptedTypes } from './source-selector'
 
 interface FileUploaderProps {
   /** Source type for file filtering */
@@ -45,10 +45,13 @@ export function FileUploader({
       }
 
       // Basic type validation - could be more sophisticated
-      const extension = '.' + file.name.split('.').pop()?.toLowerCase()
+      const extension = `.${file.name.split('.').pop()?.toLowerCase()}`
       const acceptedExtensions = acceptedTypes.split(',').filter((t) => t.startsWith('.'))
 
-      if (acceptedExtensions.length > 0 && !acceptedExtensions.some((ext) => extension === ext.toLowerCase())) {
+      if (
+        acceptedExtensions.length > 0 &&
+        !acceptedExtensions.some((ext) => extension === ext.toLowerCase())
+      ) {
         return `File type not supported. Accepted: ${acceptedExtensions.join(', ')}`
       }
 

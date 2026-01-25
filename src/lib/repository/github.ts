@@ -1,6 +1,14 @@
-import { Octokit } from '@octokit/rest'
 import { RequestError } from '@octokit/request-error'
-import type { APIContract, ContractVersion, OpenAPIObject, GitHubPermission, PlatformConfig } from '@/types'
+import { Octokit } from '@octokit/rest'
+import { parseYaml, serializeYaml } from '@/lib/openapi/parser'
+import { validateOpenAPI } from '@/lib/openapi/validator'
+import type {
+  APIContract,
+  ContractVersion,
+  GitHubPermission,
+  OpenAPIObject,
+  PlatformConfig,
+} from '@/types'
 import type {
   ContractRepository,
   ListContractsOptions,
@@ -8,8 +16,6 @@ import type {
   PullRequestResult,
   SaveResult,
 } from './types'
-import { parseYaml, serializeYaml } from '@/lib/openapi/parser'
-import { validateOpenAPI } from '@/lib/openapi/validator'
 
 /** Path to the platform configuration file in the repository */
 const CONFIG_FILE_PATH = '.api-platform/config.json'
@@ -50,9 +56,7 @@ export class GitHubContractRepository implements ContractRepository {
   }
 
   async listContracts(options?: ListContractsOptions): Promise<APIContract[]> {
-    const searchPath = options?.path
-      ? `${this.contractsPath}/${options.path}`
-      : this.contractsPath
+    const searchPath = options?.path ? `${this.contractsPath}/${options.path}` : this.contractsPath
 
     try {
       const contracts: APIContract[] = []
@@ -86,7 +90,10 @@ export class GitHubContractRepository implements ContractRepository {
     for (const item of contents) {
       if (item.type === 'dir') {
         await this.findYamlFiles(item.path, contracts, includeValidation)
-      } else if (item.type === 'file' && (item.name.endsWith('.yaml') || item.name.endsWith('.yml'))) {
+      } else if (
+        item.type === 'file' &&
+        (item.name.endsWith('.yaml') || item.name.endsWith('.yml'))
+      ) {
         try {
           const contract = await this.loadContract(item.path, includeValidation)
           contracts.push(contract)
@@ -122,7 +129,7 @@ export class GitHubContractRepository implements ContractRepository {
     })
 
     const lastCommit = commits[0]
-    const relativePath = filePath.startsWith(this.contractsPath + '/')
+    const relativePath = filePath.startsWith(`${this.contractsPath}/`)
       ? filePath.slice(this.contractsPath.length + 1)
       : filePath
 
@@ -401,11 +408,11 @@ export async function getPlatformConfig(
 ): Promise<PlatformConfig> {
   // Use native fetch to avoid Next.js dev server error logging on 404
   const url = `https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(CONFIG_FILE_PATH)}`
-  
+
   const response = await fetch(url, {
     headers: {
-      'Authorization': `Bearer ${accessToken}`,
-      'Accept': 'application/vnd.github.v3+json',
+      Authorization: `Bearer ${accessToken}`,
+      Accept: 'application/vnd.github.v3+json',
       'X-GitHub-Api-Version': '2022-11-28',
     },
     cache: 'no-store',
@@ -460,9 +467,7 @@ export async function savePlatformConfig(
     version: 1, // Always use current schema version
   }
 
-  const content = Buffer.from(
-    JSON.stringify(newConfig, null, 2)
-  ).toString('base64')
+  const content = Buffer.from(JSON.stringify(newConfig, null, 2)).toString('base64')
 
   // Check if file exists to get current SHA
   let sha: string | undefined
@@ -523,11 +528,7 @@ export async function validateRepository(
       fullName: data.full_name,
     }
   } catch (error) {
-    if (
-      typeof error === 'object' &&
-      error !== null &&
-      'status' in error
-    ) {
+    if (typeof error === 'object' && error !== null && 'status' in error) {
       const status = (error as { status: number }).status
       if (status === 404) {
         return {

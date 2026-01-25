@@ -1,10 +1,10 @@
 'use server'
 
 import { auth } from '@/auth'
-import type { ImportSourceType, ConversionResult } from '@/types/import'
-import { processImport, createImportSourceFromText, validateFileSize } from '@/lib/import'
-import { convertToOpenAPI, refineOpenAPISpec, checkAIAvailability } from '@/lib/ai/converter'
+import { checkAIAvailability, convertToOpenAPI, refineOpenAPISpec } from '@/lib/ai/converter'
+import { createImportSourceFromText, processImport, validateFileSize } from '@/lib/import'
 import { arrayBufferToBase64 } from '@/lib/import/image-processor'
+import type { ConversionResult, ImportSourceType } from '@/types/import'
 
 /**
  * Process import data - handles the server-side import processing.
@@ -52,7 +52,7 @@ export async function processImportAction(
 export async function processImageImportAction(
   base64Data: string,
   mimeType: string,
-  fileName?: string
+  _fileName?: string
 ): Promise<ConversionResult> {
   const session = await auth()
   if (!session) {
@@ -98,7 +98,10 @@ export async function processImageImportAction(
 /**
  * Refine an existing OpenAPI spec based on user feedback.
  */
-export async function refineSpecAction(currentSpec: string, feedback: string): Promise<ConversionResult> {
+export async function refineSpecAction(
+  currentSpec: string,
+  feedback: string
+): Promise<ConversionResult> {
   const session = await auth()
   if (!session) {
     return {

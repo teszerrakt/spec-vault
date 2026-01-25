@@ -1,8 +1,10 @@
 'use client'
 
-import { useState, useCallback, useEffect, useRef } from 'react'
 import { GitCompare, Loader2, RefreshCw } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
+import { generateChangelogAction } from '@/actions/contracts'
+import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
@@ -10,20 +12,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { Button } from '@/components/ui/button'
-import { Label } from '@/components/ui/label'
 import { Kbd } from '@/components/ui/kbd'
-import { useKeyboardShortcut, getMetaKeyDisplay } from '@/hooks/use-keyboard-shortcut'
+import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select'
+import { getMetaKeyDisplay, useKeyboardShortcut } from '@/hooks/use-keyboard-shortcut'
+import type { ChangelogEntry, ContractVersion } from '@/types'
 import { ChangelogViewer } from './changelog-viewer'
-import { generateChangelogAction } from '@/actions/contracts'
-import type { ContractVersion, ChangelogEntry } from '@/types'
 
 interface VersionCompareProps {
   /** Whether the dialog is open */
@@ -65,28 +59,31 @@ export function VersionCompare({
   // Track the previous open state to detect open transitions
   const prevOpenRef = useRef(false)
 
-  const handleCompare = useCallback(async (from: string, to: string) => {
-    if (!from || !to) return
-    if (from === to) {
-      setError('Please select different versions to compare')
-      return
-    }
+  const handleCompare = useCallback(
+    async (from: string, to: string) => {
+      if (!from || !to) return
+      if (from === to) {
+        setError('Please select different versions to compare')
+        return
+      }
 
-    setIsLoading(true)
-    setError(null)
-    setChangelog(null)
+      setIsLoading(true)
+      setError(null)
+      setChangelog(null)
 
-    try {
-      const result = await generateChangelogAction(contractPath, from, to)
-      setChangelog(result)
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to generate changelog'
-      setError(message)
-      toast.error('Comparison failed', { description: message })
-    } finally {
-      setIsLoading(false)
-    }
-  }, [contractPath])
+      try {
+        const result = await generateChangelogAction(contractPath, from, to)
+        setChangelog(result)
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Failed to generate changelog'
+        setError(message)
+        toast.error('Comparison failed', { description: message })
+      } finally {
+        setIsLoading(false)
+      }
+    },
+    [contractPath]
+  )
 
   // Keyboard shortcut: Cmd/Ctrl + Enter to compare
   useKeyboardShortcut({
@@ -118,7 +115,15 @@ export function VersionCompare({
       }
     }
     prevOpenRef.current = open
-  }, [open, initialFromVersion, initialToVersion, versions, latestVersion, autoCompare, handleCompare])
+  }, [
+    open,
+    initialFromVersion,
+    initialToVersion,
+    versions,
+    latestVersion,
+    autoCompare,
+    handleCompare,
+  ])
 
   // Format version label for select - truncated version
   const formatVersionLabel = (version: ContractVersion, isLatest: boolean) => {
@@ -127,7 +132,7 @@ export function VersionCompare({
     const maxMsgLength = 25
     let message = version.message.split('\n')[0]
     if (message.length > maxMsgLength) {
-      message = message.slice(0, maxMsgLength) + '...'
+      message = `${message.slice(0, maxMsgLength)}...`
     }
     return `${shortSha} - ${message}${suffix}`
   }
@@ -210,9 +215,7 @@ export function VersionCompare({
 
           {/* Error message */}
           {error && (
-            <div className="text-sm text-destructive bg-destructive/10 rounded-md p-3">
-              {error}
-            </div>
+            <div className="text-sm text-destructive bg-destructive/10 rounded-md p-3">{error}</div>
           )}
         </div>
 

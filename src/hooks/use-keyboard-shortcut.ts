@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useCallback } from 'react'
+import { useCallback, useEffect } from 'react'
 
 export type KeyModifier = 'meta' | 'ctrl' | 'alt' | 'shift'
 
@@ -19,7 +19,7 @@ export interface KeyboardShortcut {
 
 /**
  * Hook to register keyboard shortcuts
- * 
+ *
  * @example
  * ```tsx
  * useKeyboardShortcut({
@@ -30,22 +30,14 @@ export interface KeyboardShortcut {
  * ```
  */
 export function useKeyboardShortcut(shortcut: KeyboardShortcut) {
-  const {
-    key,
-    modifiers = [],
-    onTrigger,
-    enabled = true,
-    preventDefault = true,
-  } = shortcut
+  const { key, modifiers = [], onTrigger, enabled = true, preventDefault = true } = shortcut
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
       if (!enabled) return
 
       // Check if the key matches (case-insensitive for letters)
-      const keyMatches =
-        event.key.toLowerCase() === key.toLowerCase() ||
-        event.code === key
+      const keyMatches = event.key.toLowerCase() === key.toLowerCase() || event.code === key
 
       if (!keyMatches) return
 
@@ -61,7 +53,9 @@ export function useKeyboardShortcut(shortcut: KeyboardShortcut) {
       const shiftPressed = event.shiftKey
 
       // For 'meta' modifier, accept either metaKey or ctrlKey
-      const metaMatch = metaRequired ? metaPressed : !event.metaKey && !event.ctrlKey || ctrlRequired
+      const _metaMatch = metaRequired
+        ? metaPressed
+        : (!event.metaKey && !event.ctrlKey) || ctrlRequired
       const ctrlMatch = ctrlRequired ? event.ctrlKey : true
       const altMatch = altRequired === altPressed
       const shiftMatch = shiftRequired === shiftPressed
@@ -77,9 +71,7 @@ export function useKeyboardShortcut(shortcut: KeyboardShortcut) {
       // Don't trigger if user is typing in an input field (unless Escape)
       const target = event.target as HTMLElement
       const isInput =
-        target.tagName === 'INPUT' ||
-        target.tagName === 'TEXTAREA' ||
-        target.isContentEditable
+        target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable
 
       if (isInput && key.toLowerCase() !== 'escape') return
 
@@ -110,9 +102,7 @@ export function useKeyboardShortcuts(shortcuts: KeyboardShortcut[]) {
         const handler = (event: KeyboardEvent) => {
           if (!enabled) return
 
-          const keyMatches =
-            event.key.toLowerCase() === key.toLowerCase() ||
-            event.code === key
+          const keyMatches = event.key.toLowerCase() === key.toLowerCase() || event.code === key
 
           if (!keyMatches) return
 
@@ -133,9 +123,7 @@ export function useKeyboardShortcuts(shortcuts: KeyboardShortcut[]) {
 
           const target = event.target as HTMLElement
           const isInput =
-            target.tagName === 'INPUT' ||
-            target.tagName === 'TEXTAREA' ||
-            target.isContentEditable
+            target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable
 
           if (isInput && key.toLowerCase() !== 'escape') return
 

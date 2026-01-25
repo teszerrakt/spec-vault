@@ -1,12 +1,11 @@
 'use client'
 
+import { ChevronDown, ChevronRight, Plus, Trash2 } from 'lucide-react'
 import { useState } from 'react'
-import { Plus, Trash2, ChevronDown, ChevronRight } from 'lucide-react'
-import { Label } from '@/components/ui/label'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
@@ -14,10 +13,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
 import type { OpenAPIObject } from '@/types'
 
 const SECURITY_SCHEME_TYPES = ['apiKey', 'http', 'oauth2', 'openIdConnect'] as const
-type SecuritySchemeType = (typeof SECURITY_SCHEME_TYPES)[number]
+type _SecuritySchemeType = (typeof SECURITY_SCHEME_TYPES)[number]
 
 const API_KEY_LOCATIONS = ['header', 'query', 'cookie'] as const
 const HTTP_SCHEMES = ['bearer', 'basic'] as const
@@ -29,7 +29,10 @@ interface SecurityEditorProps {
 
 export function SecurityEditor({ spec, onChange }: SecurityEditorProps) {
   const components = spec?.components || {}
-  const securitySchemes = (components.securitySchemes || {}) as unknown as Record<string, Record<string, unknown>>
+  const securitySchemes = (components.securitySchemes || {}) as unknown as Record<
+    string,
+    Record<string, unknown>
+  >
   const globalSecurity = (spec?.security || []) as Array<Record<string, string[]>>
   const [expandedSchemes, setExpandedSchemes] = useState<Set<string>>(new Set())
 
@@ -146,9 +149,7 @@ export function SecurityEditor({ spec, onChange }: SecurityEditorProps) {
                     )}
                   </Button>
                   <span className="font-mono font-medium">{name}</span>
-                  <span className="text-sm text-muted-foreground">
-                    ({scheme.type as string})
-                  </span>
+                  <span className="text-sm text-muted-foreground">({scheme.type as string})</span>
                   <div className="flex-1" />
                   <label className="flex items-center gap-2 text-sm">
                     <input
@@ -220,9 +221,7 @@ export function SecurityEditor({ spec, onChange }: SecurityEditorProps) {
                           <Label>Scheme</Label>
                           <Select
                             value={(scheme.scheme as string) || 'bearer'}
-                            onValueChange={(value) =>
-                              updateSecurityScheme(name, { scheme: value })
-                            }
+                            onValueChange={(value) => updateSecurityScheme(name, { scheme: value })}
                           >
                             <SelectTrigger>
                               <SelectValue />
@@ -259,9 +258,7 @@ export function SecurityEditor({ spec, onChange }: SecurityEditorProps) {
                           <Label>Location</Label>
                           <Select
                             value={(scheme.in as string) || 'header'}
-                            onValueChange={(value) =>
-                              updateSecurityScheme(name, { in: value })
-                            }
+                            onValueChange={(value) => updateSecurityScheme(name, { in: value })}
                           >
                             <SelectTrigger>
                               <SelectValue />
@@ -280,9 +277,7 @@ export function SecurityEditor({ spec, onChange }: SecurityEditorProps) {
                           <Label>Parameter Name</Label>
                           <Input
                             value={(scheme.name as string) || ''}
-                            onChange={(e) =>
-                              updateSecurityScheme(name, { name: e.target.value })
-                            }
+                            onChange={(e) => updateSecurityScheme(name, { name: e.target.value })}
                             placeholder="X-API-Key"
                           />
                         </div>
@@ -322,7 +317,8 @@ export function SecurityEditor({ spec, onChange }: SecurityEditorProps) {
                           className="font-mono text-sm"
                         />
                         <p className="text-xs text-muted-foreground">
-                          Edit OAuth2 flows as JSON. Supports: implicit, password, clientCredentials, authorizationCode.
+                          Edit OAuth2 flows as JSON. Supports: implicit, password,
+                          clientCredentials, authorizationCode.
                         </p>
                       </div>
                     )}
@@ -337,8 +333,8 @@ export function SecurityEditor({ spec, onChange }: SecurityEditorProps) {
       <Card className="bg-muted/50">
         <CardContent className="py-4">
           <p className="text-sm text-muted-foreground">
-            <strong>Tip:</strong> Enable &quot;Global&quot; to apply the security scheme to all operations by default.
-            Individual operations can override this.
+            <strong>Tip:</strong> Enable &quot;Global&quot; to apply the security scheme to all
+            operations by default. Individual operations can override this.
           </p>
         </CardContent>
       </Card>

@@ -1,11 +1,11 @@
-import openapiDiff from 'openapi-diff'
 import type { DiffOutcome } from 'openapi-diff'
+import openapiDiff from 'openapi-diff'
 import type { Change, ChangelogEntry } from '@/types'
 import {
   categorizeChange,
-  mapActionToChangeType,
   formatChangeDescription,
   formatChangeSummary,
+  mapActionToChangeType,
 } from './formatter'
 
 /**

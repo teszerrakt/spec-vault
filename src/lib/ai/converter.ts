@@ -1,8 +1,13 @@
-import { generateText } from 'ai'
 import { createOpenAI } from '@ai-sdk/openai'
-import type { ImportSourceType, ConversionResult } from '@/types/import'
-import { SYSTEM_PROMPT, getUserPrompt, getRefinementPrompt, getImageExtractionPrompt } from './prompts'
+import { generateText } from 'ai'
 import { validateOpenAPI } from '@/lib/openapi/validator'
+import type { ConversionResult, ImportSourceType } from '@/types/import'
+import {
+  getImageExtractionPrompt,
+  getRefinementPrompt,
+  getUserPrompt,
+  SYSTEM_PROMPT,
+} from './prompts'
 
 /**
  * Options for the AI conversion process.
@@ -33,8 +38,7 @@ function getOpenAI() {
   const apiKey = process.env.OPENAI_API_KEY
   if (!apiKey) {
     throw new Error(
-      'OPENAI_API_KEY environment variable is not set. ' +
-        'Please add it to your .env.local file.'
+      'OPENAI_API_KEY environment variable is not set. ' + 'Please add it to your .env.local file.'
     )
   }
   return createOpenAI({ apiKey })

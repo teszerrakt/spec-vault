@@ -15,7 +15,7 @@ tests/
 
 ## Commands
 
-pnpm test && pnpm run lint
+pnpm test && pnpm biome check
 
 ## Code Style
 

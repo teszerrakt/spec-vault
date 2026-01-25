@@ -1,10 +1,10 @@
 'use client'
 
-import { Plus, Minus, Pencil, AlertTriangle, ArrowRight } from 'lucide-react'
+import { AlertTriangle, ArrowRight, Minus, Pencil, Plus } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { getCategoryLabel } from '@/lib/changelog/formatter'
 import { cn } from '@/lib/utils'
 import type { Change, ChangeCategory, ChangeType } from '@/types'
-import { getCategoryLabel } from '@/lib/changelog/formatter'
 
 interface ChangeItemProps {
   /** The change to display */

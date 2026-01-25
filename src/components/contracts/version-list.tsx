@@ -1,7 +1,7 @@
 'use client'
 
 import { formatDistanceToNow } from 'date-fns'
-import { GitCommit, User, Clock, GitCompare } from 'lucide-react'
+import { Clock, GitCommit, GitCompare, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import type { ContractVersion } from '@/types'
 
@@ -46,6 +46,7 @@ export function VersionList({
             }`}
           >
             <button
+              type="button"
               onClick={() => onSelectVersion?.(version)}
               className="w-full text-left"
             >

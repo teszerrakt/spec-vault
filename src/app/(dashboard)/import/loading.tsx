@@ -1,5 +1,5 @@
-import { Skeleton } from '@/components/ui/skeleton'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
 
 export default function ImportLoading() {
   return (
@@ -30,10 +30,7 @@ export default function ImportLoading() {
           {/* Source selection options */}
           <div className="grid gap-4 sm:grid-cols-2">
             {Array.from({ length: 4 }).map((_, i) => (
-              <div
-                key={i}
-                className="rounded-lg border p-4 space-y-2"
-              >
+              <div key={i} className="rounded-lg border p-4 space-y-2">
                 <div className="flex items-center gap-3">
                   <Skeleton className="h-10 w-10 rounded" />
                   <div className="space-y-1">

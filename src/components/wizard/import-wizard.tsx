@@ -1,21 +1,26 @@
 'use client'
 
-import { useCallback, useState, useEffect, useRef } from 'react'
-import { useRouter } from 'next/navigation'
 import { useMachine } from '@xstate/react'
 import { ArrowLeft, ArrowRight } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
-import { importWizardMachine, getStepName, getStepNumber, getTotalSteps } from '@/machines/import-wizard'
-import type { ImportSourceType } from '@/types/import'
+import type { SaveResult } from '@/actions/contracts'
+import { SaveDialog } from '@/components/contracts'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { SourceSelector } from './source-selector'
+import {
+  getStepName,
+  getStepNumber,
+  getTotalSteps,
+  importWizardMachine,
+} from '@/machines/import-wizard'
+import type { ImportSourceType } from '@/types/import'
 import { FileUploader } from './file-uploader'
-import { TextInput } from './text-input'
 import { ProcessingIndicator } from './processing-indicator'
+import { SourceSelector } from './source-selector'
 import { SpecPreview } from './spec-preview'
-import { SaveDialog } from '@/components/contracts'
-import type { SaveResult } from '@/actions/contracts'
+import { TextInput } from './text-input'
 
 interface ImportWizardProps {
   /** Initial source type if pre-selected */
@@ -38,7 +43,7 @@ export function ImportWizard({ initialSourceType }: ImportWizardProps) {
 
   // Track elapsed time during processing
   const isProcessing = state.matches('processing')
-  
+
   useEffect(() => {
     if (!isProcessing) {
       processingStartTimeRef.current = null
@@ -47,7 +52,7 @@ export function ImportWizard({ initialSourceType }: ImportWizardProps) {
 
     // Set start time when processing begins
     processingStartTimeRef.current = Date.now()
-    
+
     const interval = setInterval(() => {
       if (processingStartTimeRef.current !== null) {
         setElapsedTime(Date.now() - processingStartTimeRef.current)
@@ -237,7 +242,9 @@ export function ImportWizard({ initialSourceType }: ImportWizardProps) {
                             <span className="w-full border-t" />
                           </div>
                           <div className="relative flex justify-center text-xs uppercase">
-                            <span className="bg-background px-2 text-muted-foreground">Or paste content</span>
+                            <span className="bg-background px-2 text-muted-foreground">
+                              Or paste content
+                            </span>
                           </div>
                         </div>
                         <TextInput
@@ -279,7 +286,9 @@ export function ImportWizard({ initialSourceType }: ImportWizardProps) {
                           <span className="w-full border-t" />
                         </div>
                         <div className="relative flex justify-center text-xs uppercase">
-                          <span className="bg-background px-2 text-muted-foreground">Or paste content</span>
+                          <span className="bg-background px-2 text-muted-foreground">
+                            Or paste content
+                          </span>
                         </div>
                       </div>
                       <TextInput
@@ -295,7 +304,9 @@ export function ImportWizard({ initialSourceType }: ImportWizardProps) {
               {/* Processing */}
               {state.matches('processing') && (
                 <ProcessingIndicator
-                  stage={elapsedTime < 2000 ? 'parsing' : elapsedTime < 5000 ? 'analyzing' : 'generating'}
+                  stage={
+                    elapsedTime < 2000 ? 'parsing' : elapsedTime < 5000 ? 'analyzing' : 'generating'
+                  }
                   elapsedMs={elapsedTime}
                 />
               )}

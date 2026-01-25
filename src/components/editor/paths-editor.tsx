@@ -1,12 +1,11 @@
 'use client'
 
+import { ChevronDown, ChevronRight, Plus, Trash2 } from 'lucide-react'
 import { useState } from 'react'
-import { Plus, Trash2, ChevronDown, ChevronRight } from 'lucide-react'
-import { Label } from '@/components/ui/label'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
@@ -14,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
 import type { OpenAPIObject } from '@/types'
 
 const HTTP_METHODS = ['get', 'post', 'put', 'patch', 'delete', 'options', 'head'] as const
@@ -59,7 +59,7 @@ export function PathsEditor({ spec, onChange }: PathsEditorProps) {
     updatePaths(newPaths)
   }
 
-  const renamePath = (oldPath: string, newPath: string) => {
+  const _renamePath = (oldPath: string, newPath: string) => {
     if (newPath && newPath !== oldPath && !paths[newPath]) {
       const { [oldPath]: pathItem, ...rest } = paths
       updatePaths({ ...rest, [newPath]: pathItem })

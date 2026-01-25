@@ -14,16 +14,11 @@ export function ContractCard({ contract, className }: ContractCardProps) {
   return (
     <Link href={href}>
       <Card
-        className={cn(
-          'transition-colors hover:border-primary/50 hover:bg-muted/50',
-          className
-        )}
+        className={cn('transition-colors hover:border-primary/50 hover:bg-muted/50', className)}
       >
         <CardHeader className="pb-2">
           <div className="flex items-start justify-between gap-2">
-            <CardTitle className="text-base font-medium leading-tight">
-              {contract.name}
-            </CardTitle>
+            <CardTitle className="text-base font-medium leading-tight">{contract.name}</CardTitle>
             <ContractStatusBadge isValid={contract.isValid} />
           </div>
           <CardDescription className="text-xs text-muted-foreground">
@@ -38,9 +33,7 @@ export function ContractCard({ contract, className }: ContractCardProps) {
           )}
           <div className="flex items-center gap-4 text-xs text-muted-foreground">
             <span>v{contract.version}</span>
-            <span>
-              Updated {formatRelativeDate(contract.lastModified)}
-            </span>
+            <span>Updated {formatRelativeDate(contract.lastModified)}</span>
           </div>
         </CardContent>
       </Card>

@@ -1,9 +1,9 @@
 'use client'
 
 import { FileJson, FileSpreadsheet, FileText, Image } from 'lucide-react'
-import type { ImportSourceType } from '@/types/import'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
+import type { ImportSourceType } from '@/types/import'
 
 interface SourceSelectorProps {
   /** Currently selected source type */

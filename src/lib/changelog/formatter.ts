@@ -16,13 +16,21 @@ export function categorizeChange(entity: string): ChangeCategory {
   if (entityLower.includes('response')) {
     return 'response'
   }
-  if (entityLower.includes('parameter') || entityLower.includes('query') || entityLower.includes('header')) {
+  if (
+    entityLower.includes('parameter') ||
+    entityLower.includes('query') ||
+    entityLower.includes('header')
+  ) {
     return 'parameter'
   }
   if (entityLower.includes('security') || entityLower.includes('auth')) {
     return 'security'
   }
-  if (entityLower.includes('info') || entityLower.includes('title') || entityLower.includes('version')) {
+  if (
+    entityLower.includes('info') ||
+    entityLower.includes('title') ||
+    entityLower.includes('version')
+  ) {
     return 'info'
   }
   // Default to schema for body/property changes
@@ -152,7 +160,7 @@ export function formatChangeSummary(changes: Change[]): string {
     return `${changes.length} change${changes.length === 1 ? '' : 's'} detected.`
   }
 
-  return parts.join(', ') + '.'
+  return `${parts.join(', ')}.`
 }
 
 /**

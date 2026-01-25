@@ -1,5 +1,5 @@
-import { generateObject } from 'ai'
 import { createOpenAI } from '@ai-sdk/openai'
+import { generateObject } from 'ai'
 import { z } from 'zod'
 import { parseOpenAPI } from '@/lib/openapi/parser'
 
@@ -73,8 +73,7 @@ function getOpenAI() {
   const apiKey = process.env.OPENAI_API_KEY
   if (!apiKey) {
     throw new Error(
-      'OPENAI_API_KEY environment variable is not set. ' +
-        'Please add it to your .env.local file.'
+      'OPENAI_API_KEY environment variable is not set. ' + 'Please add it to your .env.local file.'
     )
   }
   return createOpenAI({ apiKey })
@@ -137,10 +136,7 @@ function extractSpecInfo(content: string): SpecInfo {
 /**
  * Calculate the diff between original and new spec.
  */
-function calculateSpecDiff(
-  oldSpec: SpecInfo,
-  newSpec: SpecInfo
-): SpecDiff {
+function calculateSpecDiff(oldSpec: SpecInfo, newSpec: SpecInfo): SpecDiff {
   const addedPaths = newSpec.paths.filter((p) => !oldSpec.paths.includes(p))
   const removedPaths = oldSpec.paths.filter((p) => !newSpec.paths.includes(p))
   const addedSchemas = newSpec.schemas.filter((s) => !oldSpec.schemas.includes(s))
@@ -229,9 +225,7 @@ function createSimpleDiff(oldContent: string, newContent: string): string {
 /**
  * Generate a PR title and description using AI.
  */
-export async function generatePRContent(
-  options: GeneratePRContentOptions
-): Promise<PRContent> {
+export async function generatePRContent(options: GeneratePRContentOptions): Promise<PRContent> {
   const { filePath, content, isNew = false, originalContent } = options
   const specInfo = extractSpecInfo(content)
   const originalSpecInfo = originalContent ? extractSpecInfo(originalContent) : null
@@ -387,11 +381,7 @@ function formatList(items: string[], emptyMessage: string): string {
 /**
  * Generate a fallback title when AI fails.
  */
-function generateFallbackTitle(
-  filePath: string,
-  specInfo: SpecInfo,
-  isNew: boolean
-): string {
+function generateFallbackTitle(filePath: string, specInfo: SpecInfo, isNew: boolean): string {
   const action = isNew ? 'Add' : 'Update'
   const apiName = specInfo.title !== 'API Contract' ? specInfo.title : extractNameFromPath(filePath)
 
@@ -429,10 +419,7 @@ function generateFallbackDescription(
 /**
  * Generate fallback description for new contracts.
  */
-function generateNewContractFallbackDescription(
-  filePath: string,
-  specInfo: SpecInfo
-): string {
+function generateNewContractFallbackDescription(filePath: string, specInfo: SpecInfo): string {
   const lines: string[] = []
 
   lines.push(`This PR adds a new API contract at \`${filePath}\`.`)
@@ -458,7 +445,10 @@ function generateNewContractFallbackDescription(
 
   if (specInfo.schemaCount > 0) {
     lines.push('## Schemas')
-    const schemaList = specInfo.schemas.slice(0, 5).map((s) => `\`${s}\``).join(', ')
+    const schemaList = specInfo.schemas
+      .slice(0, 5)
+      .map((s) => `\`${s}\``)
+      .join(', ')
     const suffix = specInfo.schemas.length > 5 ? `, and ${specInfo.schemas.length - 5} more` : ''
     lines.push(`Defines ${specInfo.schemaCount} schema(s): ${schemaList}${suffix}`)
   }
@@ -488,20 +478,28 @@ function generateUpdateContractFallbackDescription(
   // Breaking changes warning
   if (removedPaths.length > 0 || removedSchemas.length > 0) {
     lines.push('## ⚠️ Breaking Changes')
-    removedPaths.forEach((p) => lines.push(`- Removed endpoint: \`${p}\``))
-    removedSchemas.forEach((s) => lines.push(`- Removed schema: \`${s}\``))
+    for (const p of removedPaths) {
+      lines.push(`- Removed endpoint: \`${p}\``)
+    }
+    for (const s of removedSchemas) {
+      lines.push(`- Removed schema: \`${s}\``)
+    }
     lines.push('')
   }
 
   if (addedPaths.length > 0) {
     lines.push('## Added Endpoints')
-    addedPaths.forEach((p) => lines.push(`- \`${p}\``))
+    for (const p of addedPaths) {
+      lines.push(`- \`${p}\``)
+    }
     lines.push('')
   }
 
   if (addedSchemas.length > 0) {
     lines.push('## Added Schemas')
-    addedSchemas.forEach((s) => lines.push(`- \`${s}\``))
+    for (const s of addedSchemas) {
+      lines.push(`- \`${s}\``)
+    }
     lines.push('')
   }
 
@@ -526,7 +524,5 @@ function extractNameFromPath(filePath: string): string {
   const nameWithoutExt = fileName.replace(/\.ya?ml$/i, '')
 
   // Convert kebab-case or snake_case to Title Case
-  return nameWithoutExt
-    .replace(/[-_]/g, ' ')
-    .replace(/\b\w/g, (c) => c.toUpperCase())
+  return nameWithoutExt.replace(/[-_]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
 }

@@ -1,5 +1,5 @@
 import * as XLSX from 'xlsx'
-import type { ParsedImportSource, ImportSource } from '@/types/import'
+import type { ImportSource, ParsedImportSource } from '@/types/import'
 
 /**
  * Result of Excel parsing with metadata.
@@ -37,7 +37,16 @@ const ENDPOINT_HEADERS = ['method', 'path', 'endpoint', 'url', 'route', 'http_me
 /**
  * Headers that suggest schema definitions.
  */
-const SCHEMA_HEADERS = ['field', 'column', 'property', 'attribute', 'name', 'type', 'data_type', 'datatype']
+const SCHEMA_HEADERS = [
+  'field',
+  'column',
+  'property',
+  'attribute',
+  'name',
+  'type',
+  'data_type',
+  'datatype',
+]
 
 /**
  * Parse Excel content and analyze its structure.
@@ -54,7 +63,8 @@ export function parseExcelContent(buffer: ArrayBuffer): ExcelParseResult {
     })
 
     // Get headers from the first row
-    const headers = jsonData.length > 0 ? Object.keys(jsonData[0]).map((h) => h.toLowerCase().trim()) : []
+    const headers =
+      jsonData.length > 0 ? Object.keys(jsonData[0]).map((h) => h.toLowerCase().trim()) : []
 
     const sheetType = detectSheetType(headers)
 
@@ -78,7 +88,10 @@ export function parseExcelContent(buffer: ArrayBuffer): ExcelParseResult {
  * Parse an Excel import source.
  */
 export function parseExcelSource(source: ImportSource): ParsedImportSource {
-  const buffer = typeof source.content === 'string' ? new TextEncoder().encode(source.content).buffer : source.content
+  const buffer =
+    typeof source.content === 'string'
+      ? new TextEncoder().encode(source.content).buffer
+      : source.content
 
   try {
     const result = parseExcelContent(buffer)
@@ -92,7 +105,9 @@ export function parseExcelSource(source: ImportSource): ParsedImportSource {
       },
     }
   } catch (error) {
-    throw new Error(`Failed to parse Excel: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    throw new Error(
+      `Failed to parse Excel: ${error instanceof Error ? error.message : 'Unknown error'}`
+    )
   }
 }
 
@@ -158,12 +173,12 @@ function generateTextRepresentation(sheets: ExcelSheet[]): string {
 
     // Format as a table
     if (sheet.headers.length > 0) {
-      lines.push('| ' + sheet.headers.join(' | ') + ' |')
-      lines.push('| ' + sheet.headers.map(() => '---').join(' | ') + ' |')
+      lines.push(`| ${sheet.headers.join(' | ')} |`)
+      lines.push(`| ${sheet.headers.map(() => '---').join(' | ')} |`)
 
       for (const row of rowsToShow) {
         const values = sheet.headers.map((h) => String(row[h] ?? ''))
-        lines.push('| ' + values.join(' | ') + ' |')
+        lines.push(`| ${values.join(' | ')} |`)
       }
     }
 
@@ -183,7 +198,9 @@ function generateTextRepresentation(sheets: ExcelSheet[]): string {
 /**
  * Extract endpoints from an Excel sheet that appears to be an endpoint list.
  */
-export function extractEndpointsFromExcel(sheet: ExcelSheet): Array<{ method: string; path: string; description?: string }> {
+export function extractEndpointsFromExcel(
+  sheet: ExcelSheet
+): Array<{ method: string; path: string; description?: string }> {
   const endpoints: Array<{ method: string; path: string; description?: string }> = []
 
   for (const row of sheet.data) {

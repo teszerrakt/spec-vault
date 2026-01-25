@@ -1,11 +1,11 @@
-import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import { notFound } from 'next/navigation'
 import { getContract } from '@/actions/contracts'
+import { HistoryPanel } from '@/components/contracts/history-panel'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { HistoryPanel } from '@/components/contracts/history-panel'
 
 interface ContractDetailPageProps {
   params: Promise<{ path: string[] }>
@@ -47,10 +47,7 @@ export default async function ContractDetailPage({ params }: ContractDetailPageP
       <div className="flex items-start justify-between">
         <div>
           <div className="mb-1 flex items-center gap-2">
-            <Link
-              href="/contracts"
-              className="text-sm text-muted-foreground hover:text-foreground"
-            >
+            <Link href="/contracts" className="text-sm text-muted-foreground hover:text-foreground">
               Contracts
             </Link>
             <span className="text-muted-foreground">/</span>
@@ -135,9 +132,7 @@ export default async function ContractDetailPage({ params }: ContractDetailPageP
                 <CardTitle>Description</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="whitespace-pre-wrap text-muted-foreground">
-                  {contract.description}
-                </p>
+                <p className="whitespace-pre-wrap text-muted-foreground">{contract.description}</p>
               </CardContent>
             </Card>
           )}
@@ -151,9 +146,7 @@ export default async function ContractDetailPage({ params }: ContractDetailPageP
                 <ul className="space-y-2">
                   {spec.servers.map((server, index) => (
                     <li key={index} className="flex items-center gap-2">
-                      <code className="rounded bg-muted px-2 py-1 text-sm">
-                        {server.url}
-                      </code>
+                      <code className="rounded bg-muted px-2 py-1 text-sm">{server.url}</code>
                       {server.description && (
                         <span className="text-sm text-muted-foreground">
                           - {server.description}

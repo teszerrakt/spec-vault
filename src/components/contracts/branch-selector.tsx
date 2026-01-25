@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
 import { GitBranch, RefreshCw } from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
+import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Button } from '@/components/ui/button'
 
 interface BranchSelectorProps {
   /** Current branch name value */
@@ -60,7 +60,7 @@ function validateBranchName(name: string): string | null {
     return 'Branch name cannot contain ..'
   }
 
-  if (/[\s~^:?*\[\]\\]/.test(name)) {
+  if (/[\s~^:?*[\]\\]/.test(name)) {
     return 'Branch name contains invalid characters'
   }
 

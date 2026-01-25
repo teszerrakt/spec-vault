@@ -1,4 +1,4 @@
-import type { ParsedImportSource, ImportSource } from '@/types/import'
+import type { ImportSource, ParsedImportSource } from '@/types/import'
 
 /**
  * Supported image MIME types.
@@ -31,15 +31,23 @@ export const MAX_IMAGE_SIZE = 10 * 1024 * 1024
 /**
  * Process an image file for AI vision processing.
  */
-export function processImage(buffer: ArrayBuffer, mimeType: string, fileName?: string): ImageProcessResult {
+export function processImage(
+  buffer: ArrayBuffer,
+  mimeType: string,
+  fileName?: string
+): ImageProcessResult {
   // Validate size
   if (buffer.byteLength > MAX_IMAGE_SIZE) {
-    throw new Error(`Image size (${(buffer.byteLength / 1024 / 1024).toFixed(2)}MB) exceeds maximum allowed size (10MB)`)
+    throw new Error(
+      `Image size (${(buffer.byteLength / 1024 / 1024).toFixed(2)}MB) exceeds maximum allowed size (10MB)`
+    )
   }
 
   // Validate MIME type
   if (!SUPPORTED_IMAGE_TYPES.includes(mimeType as SupportedImageType)) {
-    throw new Error(`Unsupported image type: ${mimeType}. Supported types: ${SUPPORTED_IMAGE_TYPES.join(', ')}`)
+    throw new Error(
+      `Unsupported image type: ${mimeType}. Supported types: ${SUPPORTED_IMAGE_TYPES.join(', ')}`
+    )
   }
 
   // Convert to base64
@@ -58,7 +66,8 @@ export function processImage(buffer: ArrayBuffer, mimeType: string, fileName?: s
  * Process an image import source.
  */
 export function processImageSource(source: ImportSource): ParsedImportSource {
-  const buffer = typeof source.content === 'string' ? base64ToArrayBuffer(source.content) : source.content
+  const buffer =
+    typeof source.content === 'string' ? base64ToArrayBuffer(source.content) : source.content
 
   const mimeType = source.mimeType || detectImageMimeType(buffer)
 
@@ -75,7 +84,9 @@ export function processImageSource(source: ImportSource): ParsedImportSource {
       },
     }
   } catch (error) {
-    throw new Error(`Failed to process image: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    throw new Error(
+      `Failed to process image: ${error instanceof Error ? error.message : 'Unknown error'}`
+    )
   }
 }
 
@@ -125,7 +136,16 @@ export function detectImageMimeType(buffer: ArrayBuffer): string {
   }
 
   // WebP: 52 49 46 46 ... 57 45 42 50
-  if (bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46 && bytes[8] === 0x57 && bytes[9] === 0x45 && bytes[10] === 0x42 && bytes[11] === 0x50) {
+  if (
+    bytes[0] === 0x52 &&
+    bytes[1] === 0x49 &&
+    bytes[2] === 0x46 &&
+    bytes[3] === 0x46 &&
+    bytes[8] === 0x57 &&
+    bytes[9] === 0x45 &&
+    bytes[10] === 0x42 &&
+    bytes[11] === 0x50
+  ) {
     return 'image/webp'
   }
 

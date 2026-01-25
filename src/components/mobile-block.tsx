@@ -8,8 +8,8 @@ export function MobileBlock() {
       <MonitorIcon className="h-16 w-16 text-muted-foreground" />
       <h1 className="mt-6 text-2xl font-bold">Desktop Required</h1>
       <p className="mt-4 max-w-md text-muted-foreground">
-        Spec Vault is designed for desktop browsers. Please open this application
-        on a device with a larger screen.
+        Spec Vault is designed for desktop browsers. Please open this application on a device with a
+        larger screen.
       </p>
     </div>
   )

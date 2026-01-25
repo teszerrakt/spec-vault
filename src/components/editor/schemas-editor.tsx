@@ -1,12 +1,11 @@
 'use client'
 
+import { ChevronDown, ChevronRight, Plus, Trash2 } from 'lucide-react'
 import { useState } from 'react'
-import { Plus, Trash2, ChevronDown, ChevronRight } from 'lucide-react'
-import { Label } from '@/components/ui/label'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
@@ -17,11 +16,11 @@ import {
 import type { OpenAPIObject } from '@/types'
 
 const SCHEMA_TYPES = ['object', 'array', 'string', 'number', 'integer', 'boolean'] as const
-type SchemaType = (typeof SCHEMA_TYPES)[number]
+type _SchemaType = (typeof SCHEMA_TYPES)[number]
 
 const STRING_FORMATS = ['', 'date', 'date-time', 'email', 'uri', 'uuid', 'hostname', 'ipv4', 'ipv6']
-const NUMBER_FORMATS = ['', 'float', 'double']
-const INTEGER_FORMATS = ['', 'int32', 'int64']
+const _NUMBER_FORMATS = ['', 'float', 'double']
+const _INTEGER_FORMATS = ['', 'int32', 'int64']
 
 interface SchemasEditorProps {
   spec: OpenAPIObject | null
@@ -61,7 +60,7 @@ export function SchemasEditor({ spec, onChange }: SchemasEditorProps) {
     updateSchemas(newSchemas)
   }
 
-  const renameSchema = (oldName: string, newName: string) => {
+  const _renameSchema = (oldName: string, newName: string) => {
     if (newName && newName !== oldName && !schemas[newName]) {
       const { [oldName]: schema, ...rest } = schemas
       updateSchemas({ ...rest, [newName]: schema })
@@ -136,9 +135,7 @@ export function SchemasEditor({ spec, onChange }: SchemasEditorProps) {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-medium">Data Schemas</h3>
-          <p className="text-sm text-muted-foreground">
-            Define reusable data models for your API.
-          </p>
+          <p className="text-sm text-muted-foreground">Define reusable data models for your API.</p>
         </div>
         <Button onClick={addSchema} size="sm">
           <Plus className="mr-2 h-4 w-4" />
@@ -181,7 +178,7 @@ export function SchemasEditor({ spec, onChange }: SchemasEditorProps) {
                   </Button>
                   <span className="font-mono font-medium">{name}</span>
                   <span className="text-sm text-muted-foreground">
-                    ({schema.type as string || 'object'})
+                    ({(schema.type as string) || 'object'})
                   </span>
                   <span className="flex-1 text-sm text-muted-foreground">
                     {propertyCount} {propertyCount === 1 ? 'property' : 'properties'}
@@ -248,7 +245,9 @@ export function SchemasEditor({ spec, onChange }: SchemasEditorProps) {
                               >
                                 <div className="flex-1 space-y-2">
                                   <div className="flex items-center gap-2">
-                                    <code className="font-mono text-sm font-medium">{propName}</code>
+                                    <code className="font-mono text-sm font-medium">
+                                      {propName}
+                                    </code>
                                     <span className="text-xs text-muted-foreground">
                                       ({(propValue.type as string) || 'string'})
                                     </span>
@@ -286,7 +285,10 @@ export function SchemasEditor({ spec, onChange }: SchemasEditorProps) {
                                         </SelectTrigger>
                                         <SelectContent>
                                           {STRING_FORMATS.map((format) => (
-                                            <SelectItem key={format || 'none'} value={format || 'none'}>
+                                            <SelectItem
+                                              key={format || 'none'}
+                                              value={format || 'none'}
+                                            >
                                               {format || 'None'}
                                             </SelectItem>
                                           ))}
@@ -330,10 +332,10 @@ export function SchemasEditor({ spec, onChange }: SchemasEditorProps) {
                       <div className="space-y-2">
                         <Label>Array Item Type</Label>
                         <Select
-                          value={((schema.items as Record<string, unknown>)?.type as string) || 'string'}
-                          onValueChange={(value) =>
-                            updateSchema(name, { items: { type: value } })
+                          value={
+                            ((schema.items as Record<string, unknown>)?.type as string) || 'string'
                           }
+                          onValueChange={(value) => updateSchema(name, { items: { type: value } })}
                         >
                           <SelectTrigger>
                             <SelectValue />

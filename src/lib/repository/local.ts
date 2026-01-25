@@ -1,9 +1,9 @@
-import * as fs from 'fs/promises'
-import * as path from 'path'
-import type { APIContract, ContractVersion, OpenAPIObject } from '@/types'
-import type { ContractRepository, ListContractsOptions, SaveResult } from './types'
+import * as fs from 'node:fs/promises'
+import * as path from 'node:path'
 import { parseYaml, serializeYaml } from '@/lib/openapi/parser'
 import { validateOpenAPI } from '@/lib/openapi/validator'
+import type { APIContract, ContractVersion, OpenAPIObject } from '@/types'
+import type { ContractRepository, ListContractsOptions, SaveResult } from './types'
 
 /**
  * Local filesystem implementation of ContractRepository.
@@ -18,9 +18,7 @@ export class LocalContractRepository implements ContractRepository {
   }
 
   async listContracts(options?: ListContractsOptions): Promise<APIContract[]> {
-    const searchPath = options?.path
-      ? path.join(this.basePath, options.path)
-      : this.basePath
+    const searchPath = options?.path ? path.join(this.basePath, options.path) : this.basePath
 
     try {
       await fs.access(searchPath)

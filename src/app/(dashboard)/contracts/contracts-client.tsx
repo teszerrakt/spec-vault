@@ -1,8 +1,9 @@
 'use client'
 
-import { useCallback, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { useCallback, useState } from 'react'
+import { ContractList, SearchFilter } from '@/components/contracts'
 import { Button } from '@/components/ui/button'
 import { Kbd } from '@/components/ui/kbd'
 import {
@@ -14,10 +15,9 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination'
-import { ContractList, SearchFilter } from '@/components/contracts'
-import { useKeyboardShortcut, getMetaKeyDisplay } from '@/hooks/use-keyboard-shortcut'
-import type { APIContract } from '@/types'
+import { getMetaKeyDisplay, useKeyboardShortcut } from '@/hooks/use-keyboard-shortcut'
 import type { PaginatedResult } from '@/lib/repository/types'
+import type { APIContract } from '@/types'
 
 interface ContractsPageClientProps {
   paginatedResult: PaginatedResult<APIContract>
@@ -144,10 +144,7 @@ export function ContractsPageClient({ paginatedResult }: ContractsPageClientProp
                 </PaginationItem>
               ) : (
                 <PaginationItem key={pageNum}>
-                  <PaginationLink
-                    href={createPageUrl(pageNum)}
-                    isActive={pageNum === page}
-                  >
+                  <PaginationLink href={createPageUrl(pageNum)} isActive={pageNum === page}>
                     {pageNum}
                   </PaginationLink>
                 </PaginationItem>
@@ -169,7 +166,9 @@ export function ContractsPageClient({ paginatedResult }: ContractsPageClientProp
       {total > 0 && (
         <p className="text-center text-sm text-muted-foreground">
           {isSearching ? (
-            <>Showing {filteredContracts.length} of {items.length} contracts on this page</>
+            <>
+              Showing {filteredContracts.length} of {items.length} contracts on this page
+            </>
           ) : (
             <>
               Showing {(page - 1) * paginatedResult.limit + 1}-

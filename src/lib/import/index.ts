@@ -1,9 +1,14 @@
-import type { ImportSource, ImportSourceType, ParsedImportSource, ConversionResult } from '@/types/import'
-import { parseJsonSource } from './json-parser'
+import { convertToOpenAPI } from '@/lib/ai/converter'
+import type {
+  ConversionResult,
+  ImportSource,
+  ImportSourceType,
+  ParsedImportSource,
+} from '@/types/import'
 import { parseCsvSource } from './csv-parser'
 import { parseExcelSource } from './excel-parser'
-import { processImageSource, arrayBufferToBase64 } from './image-processor'
-import { convertToOpenAPI } from '@/lib/ai/converter'
+import { arrayBufferToBase64, processImageSource } from './image-processor'
+import { parseJsonSource } from './json-parser'
 
 /**
  * File size limits per type (in bytes).
@@ -59,7 +64,7 @@ export function detectSourceType(fileName?: string, mimeType?: string): ImportSo
 
   // Fall back to file extension
   if (fileName) {
-    const ext = '.' + fileName.split('.').pop()?.toLowerCase()
+    const ext = `.${fileName.split('.').pop()?.toLowerCase()}`
     if (ext in EXTENSION_MAP) {
       return EXTENSION_MAP[ext]
     }
@@ -71,7 +76,10 @@ export function detectSourceType(fileName?: string, mimeType?: string): ImportSo
 /**
  * Validate file size against limits.
  */
-export function validateFileSize(size: number, sourceType: ImportSourceType): { valid: boolean; error?: string } {
+export function validateFileSize(
+  size: number,
+  sourceType: ImportSourceType
+): { valid: boolean; error?: string } {
   const limit = FILE_SIZE_LIMITS[sourceType]
 
   if (size > limit) {
@@ -110,7 +118,8 @@ export function parseImportSource(source: ImportSource): ParsedImportSource {
  * Parse plain text source.
  */
 function parseTextSource(source: ImportSource): ParsedImportSource {
-  const content = typeof source.content === 'string' ? source.content : new TextDecoder().decode(source.content)
+  const content =
+    typeof source.content === 'string' ? source.content : new TextDecoder().decode(source.content)
 
   return {
     source,
@@ -125,7 +134,9 @@ function parseTextSource(source: ImportSource): ParsedImportSource {
 export async function processImport(source: ImportSource): Promise<ConversionResult> {
   // Validate file size
   const contentSize =
-    typeof source.content === 'string' ? new TextEncoder().encode(source.content).length : source.content.byteLength
+    typeof source.content === 'string'
+      ? new TextEncoder().encode(source.content).length
+      : source.content.byteLength
 
   const sizeValidation = validateFileSize(contentSize, source.type)
   if (!sizeValidation.valid) {
@@ -196,7 +207,10 @@ export async function createImportSourceFromFile(file: File): Promise<ImportSour
 /**
  * Create an ImportSource from plain text.
  */
-export function createImportSourceFromText(text: string, sourceType: ImportSourceType = 'text'): ImportSource {
+export function createImportSourceFromText(
+  text: string,
+  sourceType: ImportSourceType = 'text'
+): ImportSource {
   return {
     type: sourceType,
     content: text,

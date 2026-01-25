@@ -1,8 +1,8 @@
 'use client'
 
-import { CheckCircle2, AlertCircle, XCircle } from 'lucide-react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { AlertCircle, CheckCircle2, XCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import type { OpenAPIObject, ValidationError } from '@/types'
 
 interface ReviewPanelProps {
@@ -13,12 +13,7 @@ interface ReviewPanelProps {
   isDirty?: boolean
 }
 
-export function ReviewPanel({
-  spec,
-  isValid,
-  validationErrors,
-  onValidate,
-}: ReviewPanelProps) {
+export function ReviewPanel({ spec, isValid, validationErrors, onValidate }: ReviewPanelProps) {
   const info = spec?.info
   const paths = spec?.paths || {}
   const schemas = spec?.components?.schemas || {}

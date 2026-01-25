@@ -1,11 +1,11 @@
 'use client'
 
-import { useState, useCallback } from 'react'
-import type { ImportSourceType } from '@/types/import'
-import { Textarea } from '@/components/ui/textarea'
-import { Label } from '@/components/ui/label'
+import { useCallback, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import type { ImportSourceType } from '@/types/import'
 
 interface TextInputProps {
   /** Source type for context hints */
@@ -99,7 +99,9 @@ export function TextInput({
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <Label htmlFor="text-input">Content</Label>
-          <span className="text-sm text-muted-foreground">{charCount.toLocaleString()} characters</span>
+          <span className="text-sm text-muted-foreground">
+            {charCount.toLocaleString()} characters
+          </span>
         </div>
         <Textarea
           id="text-input"

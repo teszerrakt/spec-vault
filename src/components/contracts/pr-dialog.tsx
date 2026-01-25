@@ -1,8 +1,14 @@
 'use client'
 
-import { useState, useCallback, useEffect, useRef } from 'react'
-import { Loader2, GitPullRequest, ExternalLink, RefreshCw, Sparkles } from 'lucide-react'
+import { ExternalLink, GitPullRequest, Loader2, RefreshCw, Sparkles } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
+import {
+  generatePRContentAction,
+  type SubmitForReviewResult,
+  submitForReview,
+} from '@/actions/github'
+import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
@@ -11,15 +17,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Input } from '@/components/ui/input'
-import {
-  submitForReview,
-  generatePRContentAction,
-  type SubmitForReviewResult,
-} from '@/actions/github'
 
 interface PRDialogProps {
   /** Whether the dialog is open */
@@ -314,7 +314,11 @@ export function PRDialog({
             </Button>
           ) : (
             <>
-              <Button variant="outline" onClick={handleClose} disabled={isSubmitting || isGenerating}>
+              <Button
+                variant="outline"
+                onClick={handleClose}
+                disabled={isSubmitting || isGenerating}
+              >
                 Cancel
               </Button>
               <Button

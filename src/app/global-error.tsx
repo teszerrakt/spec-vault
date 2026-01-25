@@ -10,7 +10,7 @@ export default function GlobalError({
   reset: () => void
 }) {
   return (
-    <html>
+    <html lang="en">
       <body>
         <ErrorBoundary
           error={error}

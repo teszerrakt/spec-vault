@@ -1,9 +1,9 @@
 'use client'
 
-import { useCallback, useState, useTransition, useRef } from 'react'
+import { useCallback, useRef, useState, useTransition } from 'react'
 import { Input } from '@/components/ui/input'
 import { Kbd } from '@/components/ui/kbd'
-import { useKeyboardShortcut, getMetaKeyDisplay } from '@/hooks/use-keyboard-shortcut'
+import { getMetaKeyDisplay, useKeyboardShortcut } from '@/hooks/use-keyboard-shortcut'
 import { cn } from '@/lib/utils'
 
 interface SearchFilterProps {
@@ -57,7 +57,9 @@ export function SearchFilter({
           <div className="h-4 w-4 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
         </div>
       ) : (
-        <Kbd className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">{getMetaKeyDisplay()}K</Kbd>
+        <Kbd className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+          {getMetaKeyDisplay()}K
+        </Kbd>
       )}
     </div>
   )

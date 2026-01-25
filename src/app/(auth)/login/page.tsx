@@ -13,9 +13,7 @@ export default function LoginPage() {
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">Spec Vault</CardTitle>
-          <CardDescription>
-            Sign in to manage your API contracts
-          </CardDescription>
+          <CardDescription>Sign in to manage your API contracts</CardDescription>
         </CardHeader>
         <CardContent>
           <form

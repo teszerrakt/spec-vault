@@ -1,13 +1,14 @@
 'use client'
 
+import { AlertTriangleIcon, ExternalLinkIcon, Loader2Icon } from 'lucide-react'
 import { useState, useTransition } from 'react'
-import { ExternalLinkIcon, Loader2Icon, AlertTriangleIcon } from 'lucide-react'
 import { toast } from 'sonner'
+import { saveRepositorySettings } from '@/actions/github'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Badge } from '@/components/ui/badge'
 import {
   Select,
   SelectContent,
@@ -15,7 +16,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { saveRepositorySettings } from '@/actions/github'
 import type { PlatformConfig, RepositoryConfig } from '@/types'
 
 interface GitHubBranch {
@@ -80,8 +80,8 @@ export function RepositorySettings({ config, isAdmin, branches }: RepositorySett
         <Alert variant="destructive">
           <AlertTriangleIcon className="h-4 w-4" />
           <AlertDescription>
-            The configured branch &quot;{config.defaultBranch}&quot; no longer exists. 
-            Please select a valid branch.
+            The configured branch &quot;{config.defaultBranch}&quot; no longer exists. Please select
+            a valid branch.
           </AlertDescription>
         </Alert>
       )}
@@ -168,11 +168,7 @@ export function RepositorySettings({ config, isAdmin, branches }: RepositorySett
       {/* Actions */}
       {isAdmin && (
         <div className="flex items-center justify-end gap-2 border-t pt-6">
-          <Button
-            variant="outline"
-            onClick={handleReset}
-            disabled={!hasChanges || isPending}
-          >
+          <Button variant="outline" onClick={handleReset} disabled={!hasChanges || isPending}>
             Reset
           </Button>
           <Button onClick={handleSave} disabled={!hasChanges || isPending}>

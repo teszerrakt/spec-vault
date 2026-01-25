@@ -1,5 +1,5 @@
 import Papa from 'papaparse'
-import type { ParsedImportSource, ImportSource } from '@/types/import'
+import type { ImportSource, ParsedImportSource } from '@/types/import'
 
 /**
  * Result of CSV parsing with metadata.
@@ -27,7 +27,16 @@ const ENDPOINT_HEADERS = ['method', 'path', 'endpoint', 'url', 'route', 'http_me
 /**
  * Headers that suggest schema definitions.
  */
-const SCHEMA_HEADERS = ['field', 'column', 'property', 'attribute', 'name', 'type', 'data_type', 'datatype']
+const SCHEMA_HEADERS = [
+  'field',
+  'column',
+  'property',
+  'attribute',
+  'name',
+  'type',
+  'data_type',
+  'datatype',
+]
 
 /**
  * Parse CSV content and analyze its structure.
@@ -57,7 +66,8 @@ export function parseCsvContent(content: string): CsvParseResult {
  * Parse a CSV import source.
  */
 export function parseCsvSource(source: ImportSource): ParsedImportSource {
-  const content = typeof source.content === 'string' ? source.content : new TextDecoder().decode(source.content)
+  const content =
+    typeof source.content === 'string' ? source.content : new TextDecoder().decode(source.content)
 
   try {
     const result = parseCsvContent(content)
@@ -74,7 +84,9 @@ export function parseCsvSource(source: ImportSource): ParsedImportSource {
       },
     }
   } catch (error) {
-    throw new Error(`Failed to parse CSV: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    throw new Error(
+      `Failed to parse CSV: ${error instanceof Error ? error.message : 'Unknown error'}`
+    )
   }
 }
 
@@ -142,12 +154,12 @@ function generateTextRepresentation(
   const rowsToShow = data.slice(0, MAX_ROWS)
 
   // Format as a table
-  lines.push('| ' + headers.join(' | ') + ' |')
-  lines.push('| ' + headers.map(() => '---').join(' | ') + ' |')
+  lines.push(`| ${headers.join(' | ')} |`)
+  lines.push(`| ${headers.map(() => '---').join(' | ')} |`)
 
   for (const row of rowsToShow) {
     const values = headers.map((h) => row[h] || '')
-    lines.push('| ' + values.join(' | ') + ' |')
+    lines.push(`| ${values.join(' | ')} |`)
   }
 
   if (data.length > MAX_ROWS) {
@@ -161,7 +173,9 @@ function generateTextRepresentation(
 /**
  * Extract endpoints from a CSV that appears to be an endpoint list.
  */
-export function extractEndpointsFromCsv(data: Record<string, string>[]): Array<{ method: string; path: string; description?: string }> {
+export function extractEndpointsFromCsv(
+  data: Record<string, string>[]
+): Array<{ method: string; path: string; description?: string }> {
   const endpoints: Array<{ method: string; path: string; description?: string }> = []
 
   for (const row of data) {

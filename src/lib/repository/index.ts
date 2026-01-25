@@ -1,10 +1,16 @@
-import type { ContractRepository } from './types'
-import { LocalContractRepository } from './local'
 import { GitHubContractRepository, getPlatformConfig } from './github'
+import { LocalContractRepository } from './local'
+import type { ContractRepository } from './types'
 
-export type { ContractRepository, ListContractsOptions, SaveResult, PROptions, PullRequestResult } from './types'
-export { LocalContractRepository } from './local'
 export { GitHubContractRepository, getPlatformConfig } from './github'
+export { LocalContractRepository } from './local'
+export type {
+  ContractRepository,
+  ListContractsOptions,
+  PROptions,
+  PullRequestResult,
+  SaveResult,
+} from './types'
 
 interface RepositoryOptions {
   /** GitHub access token (required for GitHub repository) */
@@ -69,9 +75,7 @@ export function isDevelopmentMode(): boolean {
  * @returns Configured ContractRepository
  * @throws Error if not configured or config fails to load
  */
-export async function createConfiguredRepository(
-  accessToken: string
-): Promise<ContractRepository> {
+export async function createConfiguredRepository(accessToken: string): Promise<ContractRepository> {
   const owner = process.env.GITHUB_OWNER
   const repo = process.env.GITHUB_REPO
 

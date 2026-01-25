@@ -1,9 +1,16 @@
 'use client'
 
+import { AlertTriangle, Home, RefreshCw } from 'lucide-react'
 import { useEffect } from 'react'
-import { AlertTriangle, RefreshCw, Home } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 
 interface ErrorBoundaryProps {
   error: Error & { digest?: string }
@@ -45,9 +52,7 @@ export function ErrorBoundary({
               <p className="font-medium text-destructive">{error.name}</p>
               <p className="mt-1 text-muted-foreground break-words">{error.message}</p>
               {error.digest && (
-                <p className="mt-2 text-xs text-muted-foreground">
-                  Error ID: {error.digest}
-                </p>
+                <p className="mt-2 text-xs text-muted-foreground">Error ID: {error.digest}</p>
               )}
             </div>
           )}
