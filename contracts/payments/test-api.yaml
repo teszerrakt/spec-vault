@@ -1,0 +1,257 @@
+openapi: 3.1.0
+info:
+  title: User Management API
+  version: 1.0.0
+  summary: API for managing user accounts, including creation, retrieval, updating, and deletion of users.
+servers:
+  - url: https://api.example.com/v1
+paths:
+  /users:
+    get:
+      summary: List all users
+      description: List all users with pagination
+      operationId: listUsers
+      parameters:
+        - name: page
+          in: query
+          description: Page number for pagination
+          required: false
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          description: Number of users per page
+          required: false
+          schema:
+            type: integer
+        - name: sort
+          in: query
+          description: Sort order of users
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A list of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+        '400':
+          description: Bad Request - Invalid input
+        '401':
+          description: Unauthorized - Missing or invalid token
+        '500':
+          description: Internal Server Error
+      security:
+        - bearerAuth: []
+    post:
+      summary: Create a new user
+      description: Create a new user account
+      operationId: createUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewUser'
+      responses:
+        '200':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Bad Request - Invalid input
+        '401':
+          description: Unauthorized - Missing or invalid token
+        '500':
+          description: Internal Server Error
+      security:
+        - bearerAuth: []
+  /users/{id}:
+    get:
+      summary: Get user by ID
+      description: Get a specific user by their ID
+      operationId: getUserById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the user to retrieve
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDetail'
+        '401':
+          description: Unauthorized - Missing or invalid token
+        '404':
+          description: Not Found - Resource does not exist
+        '500':
+          description: Internal Server Error
+      security:
+        - bearerAuth: []
+    put:
+      summary: Update user
+      description: Update an existing user
+      operationId: updateUser
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the user to update
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUser'
+      responses:
+        '200':
+          description: User updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Bad Request - Invalid input
+        '401':
+          description: Unauthorized - Missing or invalid token
+        '404':
+          description: Not Found - Resource does not exist
+        '500':
+          description: Internal Server Error
+      security:
+        - bearerAuth: []
+    delete:
+      summary: Delete user
+      description: Delete a user account
+      operationId: deleteUser
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the user to delete
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: User deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteResponse'
+        '401':
+          description: Unauthorized - Missing or invalid token
+        '404':
+          description: Not Found - Resource does not exist
+        '500':
+          description: Internal Server Error
+      security:
+        - bearerAuth: []
+  /users/{id}/reset-password:
+    post:
+      summary: Reset user password
+      description: Send password reset email to user
+      operationId: resetPassword
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the user to reset password
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Password reset email sent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResetPasswordResponse'
+        '401':
+          description: Unauthorized - Missing or invalid token
+        '404':
+          description: Not Found - Resource does not exist
+        '500':
+          description: Internal Server Error
+      security:
+        - bearerAuth: []
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+    NewUser:
+      type: object
+      required:
+        - name
+        - email
+        - password
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+          minLength: 8
+        role:
+          type: string
+          default: user
+    UserDetail:
+      allOf:
+        - $ref: '#/components/schemas/User'
+        - type: object
+          properties:
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+    UpdateUser:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+    DeleteResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+    ResetPasswordResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
