@@ -1,5 +1,6 @@
 import { Octokit } from '@octokit/rest'
-import type { APIContract, ContractVersion, OpenAPIObject } from '@/types'
+import { RequestError } from '@octokit/request-error'
+import type { APIContract, ContractVersion, OpenAPIObject, GitHubPermission, PlatformConfig } from '@/types'
 import type {
   ContractRepository,
   ListContractsOptions,
@@ -9,6 +10,16 @@ import type {
 } from './types'
 import { parseYaml, serializeYaml } from '@/lib/openapi/parser'
 import { validateOpenAPI } from '@/lib/openapi/validator'
+
+/** Path to the platform configuration file in the repository */
+const CONFIG_FILE_PATH = '.api-platform/config.json'
+
+/** Default platform configuration */
+const DEFAULT_CONFIG: PlatformConfig = {
+  version: 1,
+  contractsPath: 'contracts',
+  defaultBranch: 'main',
+}
 
 interface GitHubConfig {
   owner: string
@@ -297,5 +308,258 @@ export class GitHubContractRepository implements ContractRepository {
       'status' in error &&
       (error as { status: number }).status === 404
     )
+  }
+}
+
+/**
+ * Check a user's permission level on a GitHub repository.
+ * @param accessToken - GitHub access token
+ * @param owner - Repository owner
+ * @param repo - Repository name
+ * @param username - GitHub username to check
+ * @returns User's permission level
+ */
+export async function checkUserPermission(
+  accessToken: string,
+  owner: string,
+  repo: string,
+  username: string
+): Promise<GitHubPermission> {
+  const octokit = new Octokit({ auth: accessToken })
+
+  try {
+    const { data } = await octokit.repos.getCollaboratorPermissionLevel({
+      owner,
+      repo,
+      username,
+    })
+
+    return data.permission as GitHubPermission
+  } catch (error) {
+    // If user is not a collaborator, they have no access
+    if (
+      typeof error === 'object' &&
+      error !== null &&
+      'status' in error &&
+      (error as { status: number }).status === 404
+    ) {
+      return 'read'
+    }
+    throw error
+  }
+}
+
+/**
+ * Check if a permission level grants admin access.
+ * @param permission - Permission level to check
+ * @returns True if the permission grants admin access
+ */
+export function isAdminPermission(permission: GitHubPermission): boolean {
+  return permission === 'admin'
+}
+
+/**
+ * Get the platform configuration from the repository.
+ * @param accessToken - GitHub access token
+ * @param owner - Repository owner
+ * @param repo - Repository name
+ * @returns Platform configuration (from repo or defaults)
+ */
+export async function getPlatformConfig(
+  accessToken: string,
+  owner: string,
+  repo: string
+): Promise<PlatformConfig> {
+  // Use native fetch to avoid Next.js dev server error logging on 404
+  const url = `https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(CONFIG_FILE_PATH)}`
+  
+  const response = await fetch(url, {
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+      'Accept': 'application/vnd.github.v3+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+    },
+    cache: 'no-store',
+  })
+
+  // If file doesn't exist, return defaults (no error thrown)
+  if (response.status === 404) {
+    return DEFAULT_CONFIG
+  }
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch platform config: ${response.status} ${response.statusText}`)
+  }
+
+  const data = await response.json()
+
+  if (Array.isArray(data) || data.type !== 'file') {
+    return DEFAULT_CONFIG
+  }
+
+  const content = Buffer.from(data.content, 'base64').toString('utf-8')
+  const config = JSON.parse(content) as PlatformConfig
+
+  // Merge with defaults to ensure all fields exist
+  return {
+    ...DEFAULT_CONFIG,
+    ...config,
+  }
+}
+
+/**
+ * Save the platform configuration to the repository.
+ * @param accessToken - GitHub access token
+ * @param owner - Repository owner
+ * @param repo - Repository name
+ * @param config - Platform configuration to save
+ * @returns The commit SHA of the saved config
+ */
+export async function savePlatformConfig(
+  accessToken: string,
+  owner: string,
+  repo: string,
+  config: Partial<PlatformConfig>
+): Promise<string> {
+  const octokit = new Octokit({ auth: accessToken })
+
+  // Get current config to merge with
+  const currentConfig = await getPlatformConfig(accessToken, owner, repo)
+  const newConfig: PlatformConfig = {
+    ...currentConfig,
+    ...config,
+    version: 1, // Always use current schema version
+  }
+
+  const content = Buffer.from(
+    JSON.stringify(newConfig, null, 2)
+  ).toString('base64')
+
+  // Check if file exists to get current SHA
+  let sha: string | undefined
+  try {
+    const { data } = await octokit.repos.getContent({
+      owner,
+      repo,
+      path: CONFIG_FILE_PATH,
+    })
+
+    if (!Array.isArray(data) && data.type === 'file') {
+      sha = data.sha
+    }
+  } catch {
+    // File doesn't exist, that's fine for new configs
+  }
+
+  const { data: result } = await octokit.repos.createOrUpdateFileContents({
+    owner,
+    repo,
+    path: CONFIG_FILE_PATH,
+    message: 'Update platform configuration',
+    content,
+    sha,
+  })
+
+  return result.commit.sha || ''
+}
+
+/**
+ * Validate that the repository exists and is accessible.
+ * @param accessToken - GitHub access token
+ * @param owner - Repository owner
+ * @param repo - Repository name
+ * @returns Repository information if accessible
+ */
+export async function validateRepository(
+  accessToken: string,
+  owner: string,
+  repo: string
+): Promise<{
+  valid: boolean
+  error?: string
+  defaultBranch?: string
+  fullName?: string
+}> {
+  const octokit = new Octokit({ auth: accessToken })
+
+  try {
+    const { data } = await octokit.repos.get({
+      owner,
+      repo,
+    })
+
+    return {
+      valid: true,
+      defaultBranch: data.default_branch,
+      fullName: data.full_name,
+    }
+  } catch (error) {
+    if (
+      typeof error === 'object' &&
+      error !== null &&
+      'status' in error
+    ) {
+      const status = (error as { status: number }).status
+      if (status === 404) {
+        return {
+          valid: false,
+          error: 'Repository not found. Check the owner and repository name.',
+        }
+      }
+      if (status === 403) {
+        return {
+          valid: false,
+          error: 'Access denied. You may not have permission to access this repository.',
+        }
+      }
+    }
+
+    return {
+      valid: false,
+      error: error instanceof Error ? error.message : 'Failed to validate repository',
+    }
+  }
+}
+
+/**
+ * GitHub branch information.
+ */
+export interface GitHubBranch {
+  /** Branch name */
+  name: string
+  /** Whether the branch is protected */
+  protected: boolean
+}
+
+/**
+ * List all branches in a repository.
+ * @param accessToken - GitHub access token
+ * @param owner - Repository owner
+ * @param repo - Repository name
+ * @returns Array of branches
+ */
+export async function listBranches(
+  accessToken: string,
+  owner: string,
+  repo: string
+): Promise<GitHubBranch[]> {
+  const octokit = new Octokit({ auth: accessToken })
+
+  try {
+    const { data } = await octokit.repos.listBranches({
+      owner,
+      repo,
+      per_page: 100,
+    })
+
+    return data.map((branch) => ({
+      name: branch.name,
+      protected: branch.protected,
+    }))
+  } catch (error) {
+    if (error instanceof RequestError && error.status === 404) {
+      return []
+    }
+    throw error
   }
 }

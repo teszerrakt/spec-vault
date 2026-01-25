@@ -89,15 +89,43 @@ interface ImportSource {
 
 ### RepositoryConfig
 
-User's selected GitHub repository configuration.
+User's selected GitHub repository configuration. The `owner` and `repo` fields
+are bootstrapped from environment variables, while other settings can be 
+stored in a config file within the connected repository.
 
 ```typescript
 interface RepositoryConfig {
-  owner: string;
-  repo: string;
-  defaultBranch: string;
+  owner: string;                 // From env: GITHUB_REPO_OWNER
+  repo: string;                  // From env: GITHUB_REPO_NAME
+  defaultBranch: string;         // From config file or env default
   contractsPath: string;         // Default: "contracts/"
 }
+```
+
+### PlatformConfig
+
+Platform configuration stored in the connected GitHub repository at
+`.api-platform/config.json`. This allows administrators to change settings
+without redeploying the application.
+
+```typescript
+interface PlatformConfig {
+  version: number;               // Config schema version (currently 1)
+  contractsPath: string;         // Default: "contracts/"
+  defaultBranch: string;         // Default: "main"
+}
+```
+
+### GitHubPermission
+
+GitHub repository permission levels, used to determine administrator access.
+
+```typescript
+type GitHubPermission = 'admin' | 'maintain' | 'write' | 'triage' | 'read';
+
+// A user is considered an admin if they have 'admin' permission on the 
+// connected GitHub repository. This is checked via the GitHub API:
+// GET /repos/{owner}/{repo}/collaborators/{username}/permission
 ```
 
 ## ContractRepository Interface

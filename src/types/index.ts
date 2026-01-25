@@ -118,3 +118,33 @@ export interface RepositoryConfig {
   /** Path prefix for contract files (default: "contracts/") */
   contractsPath: string
 }
+
+/**
+ * Platform configuration stored in the connected GitHub repository.
+ * Stored at `.api-platform/config.json`.
+ */
+export interface PlatformConfig {
+  /** Config schema version (currently 1) */
+  version: number
+  /** Path prefix for contract files */
+  contractsPath: string
+  /** Default branch name */
+  defaultBranch: string
+}
+
+/**
+ * GitHub repository permission levels.
+ */
+export type GitHubPermission = 'admin' | 'maintain' | 'write' | 'triage' | 'read'
+
+/**
+ * Result of checking a user's repository permission.
+ */
+export interface PermissionCheckResult {
+  /** User's permission level */
+  permission: GitHubPermission
+  /** Whether the user has admin access */
+  isAdmin: boolean
+  /** GitHub username */
+  username: string
+}

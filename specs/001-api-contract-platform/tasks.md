@@ -274,26 +274,30 @@ Based on plan.md structure:
 
 **Independent Test**: Complete repository configuration, verify system can read/write to the repo
 
+**Admin Role Implementation**: Administrator access is determined by GitHub repository permissions.
+Users with `admin` permission on the connected repository can edit platform settings.
+Settings are stored in `.api-platform/config.json` within the repository.
+
 ### Server Actions for US7
 
-- [ ] T083 [US7] Create `listRepositories` Server Action in `src/actions/github.ts`
-- [ ] T084 [US7] Create `validateRepository` Server Action in `src/actions/github.ts`
-- [ ] T085 [US7] Create `saveRepositoryConfig` Server Action in `src/actions/github.ts`
+- [x] T083 [US7] Create `getRepositorySettings` Server Action in `src/actions/github.ts` (replaces listRepositories - repo comes from env vars)
+- [x] T084 [US7] Create `validateRepositoryConnection` Server Action in `src/actions/github.ts`
+- [x] T085 [US7] Create `saveRepositorySettings` Server Action in `src/actions/github.ts`
 
 ### UI Components for US7
 
-- [ ] T086 [P] [US7] Create RepositorySelector component in `src/components/settings/repository-selector.tsx`
-- [ ] T087 [P] [US7] Create ConnectionStatus component in `src/components/settings/connection-status.tsx`
-- [ ] T088 [P] [US7] Create SettingsForm component in `src/components/settings/settings-form.tsx`
+- [x] T086 [P] [US7] Create RepositoryInfo component in `src/components/settings/repository-info.tsx` (replaces RepositorySelector - repo is pre-configured)
+- [x] T087 [P] [US7] Create ConnectionStatus component in `src/components/settings/connection-status.tsx`
+- [x] T088 [P] [US7] Create SettingsForm component in `src/components/settings/settings-form.tsx`
 
 ### Pages for US7
 
-- [ ] T089 [US7] Create settings page in `src/app/(dashboard)/settings/page.tsx`
+- [x] T089 [US7] Create settings page in `src/app/(dashboard)/settings/page.tsx`
 
 ### Auth Pages for US7
 
-- [ ] T090 [P] [US7] Create login page in `src/app/(auth)/login/page.tsx`
-- [ ] T091 [US7] Create auth layout in `src/app/(auth)/layout.tsx`
+- [x] T090 [P] [US7] Create login page in `src/app/(auth)/login/page.tsx`
+- [x] T091 [US7] Create auth layout in `src/app/(auth)/layout.tsx`
 
 **Checkpoint**: Users can configure repository connection and authenticate with GitHub
 
