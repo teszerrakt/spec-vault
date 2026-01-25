@@ -74,9 +74,10 @@ export interface ContractRepository {
    * @param filePath - Path to save the contract
    * @param specOrYaml - OpenAPI specification object or YAML string
    * @param message - Commit message
+   * @param branch - Optional target branch (defaults to main branch)
    * @returns Save result with commit info
    */
-  saveContract(filePath: string, specOrYaml: OpenAPIObject | string, message: string): Promise<SaveResult>
+  saveContract(filePath: string, specOrYaml: OpenAPIObject | string, message: string, branch?: string): Promise<SaveResult>
 
   /**
    * Delete a contract from the repository.
@@ -98,4 +99,17 @@ export interface ContractRepository {
    * @returns PR result with URL
    */
   createPullRequest?(options: PROptions): Promise<PullRequestResult>
+
+  /**
+   * Create a new branch (optional - only available for GitHub repository).
+   * @param branchName - Name for the new branch
+   * @returns The branch name
+   */
+  createBranch?(branchName: string): Promise<string>
+
+  /**
+   * Get the default branch name.
+   * @returns Default branch name (e.g., 'main')
+   */
+  getDefaultBranch?(): string
 }

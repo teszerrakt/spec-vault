@@ -155,8 +155,10 @@ export class GitHubContractRepository implements ContractRepository {
   async saveContract(
     filePath: string,
     specOrYaml: OpenAPIObject | string,
-    message: string
+    message: string,
+    branch?: string
   ): Promise<SaveResult> {
+    const targetBranch = branch || this.defaultBranch
     const fullPath = `${this.contractsPath}/${filePath}`
     const yaml = typeof specOrYaml === 'string' ? specOrYaml : serializeYaml(specOrYaml)
     const content = Buffer.from(yaml).toString('base64')
@@ -168,7 +170,7 @@ export class GitHubContractRepository implements ContractRepository {
         owner: this.owner,
         repo: this.repo,
         path: fullPath,
-        ref: this.defaultBranch,
+        ref: targetBranch,
       })
 
       if (!Array.isArray(existingFile) && existingFile.type === 'file') {
@@ -189,13 +191,13 @@ export class GitHubContractRepository implements ContractRepository {
       message,
       content,
       sha,
-      branch: this.defaultBranch,
+      branch: targetBranch,
     })
 
     return {
       filePath,
       commitSha: result.commit.sha,
-      branch: this.defaultBranch,
+      branch: targetBranch,
     }
   }
 
@@ -279,6 +281,13 @@ export class GitHubContractRepository implements ContractRepository {
     })
 
     return branchName
+  }
+
+  /**
+   * Get the default branch name.
+   */
+  getDefaultBranch(): string {
+    return this.defaultBranch
   }
 
   private isNotFoundError(error: unknown): boolean {

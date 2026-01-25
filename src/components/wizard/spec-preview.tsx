@@ -1,14 +1,12 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { Copy, Check, Download, AlertCircle, CheckCircle, Edit } from 'lucide-react'
+import { Copy, Check, Download, AlertCircle, CheckCircle, Edit, Save } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Label } from '@/components/ui/label'
-import { Input } from '@/components/ui/input'
 
 interface SpecPreviewProps {
   /** Generated OpenAPI YAML */
@@ -25,10 +23,6 @@ interface SpecPreviewProps {
   onEdit?: (yaml: string) => void
   /** Callback when save is triggered */
   onSave?: () => void
-  /** Target file path */
-  targetPath?: string
-  /** Callback when target path changes */
-  onTargetPathChange?: (path: string) => void
   /** Whether actions are disabled */
   disabled?: boolean
 }
@@ -41,8 +35,6 @@ export function SpecPreview({
   processingTimeMs,
   onEdit,
   onSave,
-  targetPath = '',
-  onTargetPathChange,
   disabled = false,
 }: SpecPreviewProps) {
   const [copied, setCopied] = useState(false)
@@ -60,12 +52,12 @@ export function SpecPreview({
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = targetPath ? targetPath.split('/').pop() || 'openapi.yaml' : 'openapi.yaml'
+    a.download = 'openapi.yaml'
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
     URL.revokeObjectURL(url)
-  }, [yaml, targetPath])
+  }, [yaml])
 
   const handleEditToggle = useCallback(() => {
     if (isEditing && editedYaml !== yaml) {
@@ -157,23 +149,13 @@ export function SpecPreview({
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Save Specification</CardTitle>
-            <CardDescription>Choose a file path for your new contract</CardDescription>
+            <CardDescription>
+              Save this contract to the repository or submit it for review
+            </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="target-path">File Path</Label>
-              <Input
-                id="target-path"
-                value={targetPath}
-                onChange={(e) => onTargetPathChange?.(e.target.value)}
-                placeholder="contracts/my-api.yaml"
-                disabled={disabled}
-              />
-              <p className="text-sm text-muted-foreground">
-                The path where the contract will be saved in the repository
-              </p>
-            </div>
-            <Button onClick={onSave} disabled={disabled || !targetPath || !isValid}>
+          <CardContent>
+            <Button onClick={onSave} disabled={disabled || !isValid}>
+              <Save className="mr-2 h-4 w-4" />
               Save Contract
             </Button>
           </CardContent>

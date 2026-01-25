@@ -223,17 +223,17 @@ Based on plan.md structure:
 
 ### Server Actions for US5
 
-- [ ] T071 [US5] Create `createPullRequest` Server Action in `src/actions/github.ts`
-- [ ] T072 [US5] Create `createBranch` helper in `src/lib/repository/github.ts`
+- [x] T071 [US5] Create `createPullRequest` Server Action in `src/actions/github.ts`
+- [x] T072 [US5] Create `createBranch` helper in `src/lib/repository/github.ts`
 
 ### UI Components for US5
 
-- [ ] T073 [P] [US5] Create PRDialog component in `src/components/contracts/pr-dialog.tsx`
-- [ ] T074 [P] [US5] Create BranchSelector component in `src/components/contracts/branch-selector.tsx`
+- [x] T073 [P] [US5] Create PRDialog component in `src/components/contracts/pr-dialog.tsx`
+- [x] T074 [P] [US5] Create BranchSelector component in `src/components/contracts/branch-selector.tsx`
 
 ### Integration for US5
 
-- [ ] T075 [US5] Add "Submit for Review" option to SaveDialog in `src/components/contracts/save-dialog.tsx`
+- [x] T075 [US5] Add "Submit for Review" option to SaveDialog in `src/components/contracts/save-dialog.tsx`
 
 **Checkpoint**: Users can create PRs and are redirected to GitHub for review
 

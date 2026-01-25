@@ -24,9 +24,5 @@ export default async function ImportPage({ searchParams }: ImportPageProps) {
   const params = await searchParams
   const sourceType = params.type as 'json' | 'csv' | 'excel' | 'image' | 'text' | undefined
 
-  return (
-    <div className="container py-6">
-      <ImportWizard initialSourceType={sourceType} />
-    </div>
-  )
+  return <ImportWizard initialSourceType={sourceType} />
 }
