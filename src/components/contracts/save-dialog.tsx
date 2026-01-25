@@ -16,7 +16,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
 import { Kbd } from '@/components/ui/kbd'
-import { getMetaKeyDisplay } from '@/hooks/use-keyboard-shortcut'
+import { useKeyboardShortcut, getMetaKeyDisplay } from '@/hooks/use-keyboard-shortcut'
 import { saveContract, type SaveResult } from '@/actions/contracts'
 import { PRDialog } from './pr-dialog'
 
@@ -133,24 +133,24 @@ export function SaveDialog({
     setCommitMessage('')
   }, [])
 
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === 'Enter' && e.metaKey) {
-        e.preventDefault()
-        if (saveMode === 'direct' && showDirectSaveOption) {
-          handleSave()
-        } else {
-          handleSubmitForReview()
-        }
+  // Keyboard shortcut: Cmd/Ctrl + Enter to submit
+  useKeyboardShortcut({
+    key: 'Enter',
+    modifiers: ['meta'],
+    onTrigger: () => {
+      if (saveMode === 'direct' && showDirectSaveOption) {
+        handleSave()
+      } else {
+        handleSubmitForReview()
       }
     },
-    [handleSave, handleSubmitForReview, saveMode, showDirectSaveOption]
-  )
+    enabled: open && !isSaving && !!targetPath?.trim(),
+  })
 
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-[500px]" onKeyDown={handleKeyDown}>
+        <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <GitPullRequest className="h-5 w-5" />

@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { GitCompare, Loader2, RefreshCw } from 'lucide-react'
+import { toast } from 'sonner'
 import {
   Dialog,
   DialogContent,
@@ -18,6 +19,8 @@ import {
 } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
+import { Kbd } from '@/components/ui/kbd'
+import { useKeyboardShortcut, getMetaKeyDisplay } from '@/hooks/use-keyboard-shortcut'
 import { ChangelogViewer } from './changelog-viewer'
 import { generateChangelogAction } from '@/actions/contracts'
 import type { ContractVersion, ChangelogEntry } from '@/types'
@@ -77,11 +80,21 @@ export function VersionCompare({
       const result = await generateChangelogAction(contractPath, from, to)
       setChangelog(result)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to generate changelog')
+      const message = err instanceof Error ? err.message : 'Failed to generate changelog'
+      setError(message)
+      toast.error('Comparison failed', { description: message })
     } finally {
       setIsLoading(false)
     }
   }, [contractPath])
+
+  // Keyboard shortcut: Cmd/Ctrl + Enter to compare
+  useKeyboardShortcut({
+    key: 'Enter',
+    modifiers: ['meta'],
+    onTrigger: () => handleCompare(fromSha, toSha),
+    enabled: open && !isLoading && !!fromSha && !!toSha && fromSha !== toSha,
+  })
 
   // Initialize state and optionally auto-compare when dialog opens
   useEffect(() => {
@@ -190,6 +203,7 @@ export function VersionCompare({
               <>
                 <RefreshCw className="mr-2 h-4 w-4" />
                 Compare Versions
+                <Kbd className="ml-2">{getMetaKeyDisplay()}↵</Kbd>
               </>
             )}
           </Button>

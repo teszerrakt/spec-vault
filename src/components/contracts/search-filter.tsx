@@ -1,8 +1,9 @@
 'use client'
 
-import { useCallback, useState, useTransition, useRef, useEffect } from 'react'
+import { useCallback, useState, useTransition, useRef } from 'react'
 import { Input } from '@/components/ui/input'
 import { Kbd } from '@/components/ui/kbd'
+import { useKeyboardShortcut, getMetaKeyDisplay } from '@/hooks/use-keyboard-shortcut'
 import { cn } from '@/lib/utils'
 
 interface SearchFilterProps {
@@ -33,25 +34,12 @@ export function SearchFilter({
     [onSearch]
   )
 
-  // Keyboard shortcut: "/" to focus search
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Don't trigger if user is in an input field
-      const target = e.target as HTMLElement
-      const isInput =
-        target.tagName === 'INPUT' ||
-        target.tagName === 'TEXTAREA' ||
-        target.isContentEditable
-
-      if (e.key === '/' && !isInput) {
-        e.preventDefault()
-        inputRef.current?.focus()
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [])
+  // Keyboard shortcut: Cmd/Ctrl + K to focus search
+  useKeyboardShortcut({
+    key: 'k',
+    modifiers: ['meta'],
+    onTrigger: () => inputRef.current?.focus(),
+  })
 
   return (
     <div className={cn('relative', className)}>
@@ -69,7 +57,7 @@ export function SearchFilter({
           <div className="h-4 w-4 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
         </div>
       ) : (
-        <Kbd className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">/</Kbd>
+        <Kbd className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">{getMetaKeyDisplay()}K</Kbd>
       )}
     </div>
   )
