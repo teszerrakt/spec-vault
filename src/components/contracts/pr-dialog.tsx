@@ -34,6 +34,8 @@ interface PRDialogProps {
   onSuccess?: (result: SubmitForReviewResult) => void
   /** Whether this is a new contract (vs update) */
   isNew?: boolean
+  /** Original content before changes (for updates) */
+  originalContent?: string
 }
 
 export function PRDialog({
@@ -43,6 +45,7 @@ export function PRDialog({
   content,
   onSuccess,
   isNew = false,
+  originalContent,
 }: PRDialogProps) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -58,9 +61,9 @@ export function PRDialog({
   // Generate a cache key based on content hash
   const getCacheKey = useCallback(() => {
     // Simple hash based on content length and first/last chars
-    const hash = `${filePath}-${content.length}-${content.slice(0, 50)}-${isNew}`
+    const hash = `${filePath}-${content.length}-${content.slice(0, 50)}-${isNew}-${originalContent?.length || 0}`
     return hash
-  }, [filePath, content, isNew])
+  }, [filePath, content, isNew, originalContent])
 
   // Generate PR content using AI
   const generateContent = useCallback(
@@ -78,7 +81,7 @@ export function PRDialog({
       setGenerationError(null)
 
       try {
-        const result = await generatePRContentAction(filePath, content, isNew)
+        const result = await generatePRContentAction(filePath, content, isNew, originalContent)
 
         if (result.success && result.title && result.description) {
           setTitle(result.title)
@@ -121,7 +124,7 @@ export function PRDialog({
         setIsGenerating(false)
       }
     },
-    [filePath, content, isNew, getCacheKey]
+    [filePath, content, isNew, originalContent, getCacheKey]
   )
 
   // Generate content when dialog opens

@@ -236,18 +236,21 @@ export async function createPullRequest(
  * @param filePath - Path to the contract file
  * @param content - YAML content of the contract
  * @param isNew - Whether this is a new contract (vs update)
+ * @param originalContent - Original content before changes (for updates)
  * @returns Generated title and description
  */
 export async function generatePRContentAction(
   filePath: string,
   content: string,
-  isNew: boolean = false
+  isNew: boolean = false,
+  originalContent?: string
 ): Promise<GeneratePRContentResult> {
   try {
     const result = await generatePRContent({
       filePath,
       content,
       isNew,
+      originalContent,
     })
 
     return {

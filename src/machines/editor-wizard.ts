@@ -29,8 +29,6 @@ export interface EditorWizardContext {
   isValid: boolean
   /** Error message if failed */
   errorMessage: string | null
-  /** Commit message for saving */
-  commitMessage: string
   /** Whether we're creating a new spec (no original) */
   isNew: boolean
 }
@@ -47,8 +45,6 @@ export type EditorWizardEvent =
   | { type: 'NEXT' }
   | { type: 'BACK' }
   | { type: 'VALIDATE' }
-  | { type: 'SAVE' }
-  | { type: 'SET_COMMIT_MESSAGE'; message: string }
   | { type: 'RESET' }
   | { type: 'DISCARD_CHANGES' }
 
@@ -65,7 +61,6 @@ const initialContext: EditorWizardContext = {
   validationErrors: [],
   isValid: false,
   errorMessage: null,
-  commitMessage: '',
   isNew: false,
 }
 
@@ -82,21 +77,6 @@ const validateSpecActor = fromPromise<
     isValid: result.isValid,
     errors: result.errors || [],
   }
-})
-
-/**
- * Save contract actor - saves the contract.
- */
-const saveContractActor = fromPromise<
-  { success: boolean },
-  { filePath: string; yaml: string; message: string }
->(async ({ input }) => {
-  const { saveContract } = await import('@/actions/contracts')
-  const result = await saveContract(input.filePath, input.yaml, input.message)
-  if (!result.success) {
-    throw new Error(result.error || 'Failed to save contract')
-  }
-  return { success: true }
 })
 
 /**
@@ -134,12 +114,10 @@ export const editorWizardMachine = setup({
   },
   actors: {
     validateSpec: validateSpecActor,
-    saveContract: saveContractActor,
   },
   guards: {
     isDirty: ({ context }) => context.isDirty,
     isValid: ({ context }) => context.isValid,
-    hasCommitMessage: ({ context }) => context.commitMessage.trim().length > 0,
     canGoNext: ({ context }) => {
       const index = SECTION_ORDER.indexOf(context.currentSection)
       return index < SECTION_ORDER.length - 1
@@ -228,14 +206,6 @@ export const editorWizardMachine = setup({
             VALIDATE: {
               target: 'validating',
             },
-            SET_COMMIT_MESSAGE: {
-              actions: assign({
-                commitMessage: ({ event }) => event.message,
-              }),
-            },
-            SAVE: {
-              target: 'validating',
-            },
             DISCARD_CHANGES: {
               actions: assign({
                 spec: ({ context }) => context.originalSpec,
@@ -251,24 +221,13 @@ export const editorWizardMachine = setup({
             id: 'validateSpec',
             src: 'validateSpec',
             input: ({ context }) => ({ yaml: context.yaml }),
-            onDone: [
-              {
-                target: '#editorWizard.saving',
-                guard: ({ context, event }) =>
-                  event.output.isValid && context.commitMessage.trim().length > 0,
-                actions: assign({
-                  isValid: ({ event }) => event.output.isValid,
-                  validationErrors: ({ event }) => event.output.errors,
-                }),
-              },
-              {
-                target: 'active',
-                actions: assign({
-                  isValid: ({ event }) => event.output.isValid,
-                  validationErrors: ({ event }) => event.output.errors,
-                }),
-              },
-            ],
+            onDone: {
+              target: 'active',
+              actions: assign({
+                isValid: ({ event }) => event.output.isValid,
+                validationErrors: ({ event }) => event.output.errors,
+              }),
+            },
             onError: {
               target: 'active',
               actions: assign({
@@ -283,33 +242,6 @@ export const editorWizardMachine = setup({
               }),
             },
           },
-        },
-      },
-    },
-
-    saving: {
-      invoke: {
-        id: 'saveContract',
-        src: 'saveContract',
-        input: ({ context }) => ({
-          filePath: context.filePath,
-          yaml: context.yaml,
-          message: context.commitMessage,
-        }),
-        onDone: {
-          target: 'complete',
-          actions: assign({
-            isDirty: false,
-            originalSpec: ({ context }) => context.spec,
-            errorMessage: null,
-          }),
-        },
-        onError: {
-          target: 'error',
-          actions: assign({
-            errorMessage: ({ event }) =>
-              event.error instanceof Error ? event.error.message : 'Failed to save',
-          }),
         },
       },
     },
@@ -344,7 +276,7 @@ export const editorWizardMachine = setup({
 /**
  * Type helper for the state value.
  */
-export type EditorWizardState = 'idle' | 'editing' | 'saving' | 'error' | 'complete'
+export type EditorWizardState = 'idle' | 'editing' | 'error' | 'complete'
 
 /**
  * Get human-readable section name.

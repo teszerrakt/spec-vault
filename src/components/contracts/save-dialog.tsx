@@ -46,6 +46,8 @@ interface SaveDialogProps {
    * @default false - Hidden until role-based settings are implemented
    */
   showDirectSaveOption?: boolean
+  /** Original content before changes (for updates) */
+  originalContent?: string
 }
 
 export function SaveDialog({
@@ -58,6 +60,7 @@ export function SaveDialog({
   // TODO: Enable when role-based settings are implemented (Phase 9 - US7)
   // For now, always hide the direct save option - all saves go through PR review
   showDirectSaveOption = false,
+  originalContent,
 }: SaveDialogProps) {
   const [filePath, setFilePath] = useState(initialFilePath || '')
   const [commitMessage, setCommitMessage] = useState('')
@@ -297,6 +300,7 @@ export function SaveDialog({
           content={content}
           onSuccess={handlePRSuccess}
           isNew={isNew}
+          originalContent={originalContent}
         />
       )}
     </>

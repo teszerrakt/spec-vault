@@ -3,35 +3,21 @@
 import { CheckCircle2, AlertCircle, XCircle } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
 import type { OpenAPIObject, ValidationError } from '@/types'
 
 interface ReviewPanelProps {
   spec: OpenAPIObject | null
-  yaml: string
   isValid: boolean
   validationErrors: ValidationError[]
-  commitMessage: string
-  onCommitMessageChange: (message: string) => void
   onValidate: () => void
-  onSave: () => void
-  isSaving?: boolean
   isDirty?: boolean
 }
 
 export function ReviewPanel({
   spec,
-  yaml,
   isValid,
   validationErrors,
-  commitMessage,
-  onCommitMessageChange,
   onValidate,
-  onSave,
-  isSaving = false,
-  isDirty = false,
 }: ReviewPanelProps) {
   const info = spec?.info
   const paths = spec?.paths || {}
@@ -164,46 +150,10 @@ export function ReviewPanel({
           <Button onClick={onValidate} variant="outline" className="mt-4 w-full">
             {validationErrors.length > 0 ? 'Re-validate' : 'Validate Specification'}
           </Button>
-        </CardContent>
-      </Card>
 
-      {/* Commit Message */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Commit Message</CardTitle>
-          <CardDescription>
-            Describe the changes you made to this specification.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="commit-message">Message *</Label>
-            <Textarea
-              id="commit-message"
-              value={commitMessage}
-              onChange={(e) => onCommitMessageChange(e.target.value)}
-              placeholder="e.g., Added user authentication endpoints"
-              rows={3}
-            />
-          </div>
-
-          <Button
-            onClick={onSave}
-            disabled={!isValid || !commitMessage.trim() || isSaving}
-            className="w-full"
-          >
-            {isSaving ? 'Saving...' : 'Save Specification'}
-          </Button>
-
-          {!isValid && (
-            <p className="text-sm text-red-500 text-center">
+          {!isValid && validationErrors.length > 0 && (
+            <p className="text-sm text-red-500 text-center mt-2">
               Please fix validation errors before saving.
-            </p>
-          )}
-
-          {!commitMessage.trim() && isValid && (
-            <p className="text-sm text-muted-foreground text-center">
-              Please enter a commit message.
             </p>
           )}
         </CardContent>

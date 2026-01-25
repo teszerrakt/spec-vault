@@ -50,7 +50,7 @@ export function EditorWizard({
   const [state, send] = useMachine(editorWizardMachine)
   const [saveDialogOpen, setSaveDialogOpen] = useState(false)
 
-  const { spec, yaml, currentSection, isValid, validationErrors, commitMessage, isDirty } =
+  const { spec, yaml, currentSection, isValid, validationErrors, isDirty } =
     state.context
 
   // Initialize the machine with the provided data
@@ -145,13 +145,6 @@ export function EditorWizard({
     [router, filePath]
   )
 
-  const handleCommitMessageChange = useCallback(
-    (message: string) => {
-      send({ type: 'SET_COMMIT_MESSAGE', message })
-    },
-    [send]
-  )
-
   // Handle completion
   useEffect(() => {
     if (state.matches('complete') && filePath) {
@@ -188,7 +181,7 @@ export function EditorWizard({
 
   const sections = getAllSections()
   const currentIndex = sections.indexOf(currentSection)
-  const isSaving = state.matches({ editing: 'validating' }) || state.matches('saving')
+  const isValidating = state.matches({ editing: 'validating' })
 
   return (
     <div className="space-y-6">
@@ -200,6 +193,7 @@ export function EditorWizard({
         content={yaml}
         onSaveSuccess={handleSaveSuccess}
         isNew={isNew}
+        originalContent={isNew ? undefined : initialYaml}
       />
 
       {/* Section Navigation */}
@@ -274,14 +268,9 @@ export function EditorWizard({
             <TabsContent value="review" className="mt-0">
               <ReviewPanel
                 spec={spec}
-                yaml={yaml}
                 isValid={isValid}
                 validationErrors={validationErrors}
-                commitMessage={commitMessage}
-                onCommitMessageChange={handleCommitMessageChange}
                 onValidate={handleValidate}
-                onSave={handleSave}
-                isSaving={isSaving}
                 isDirty={isDirty}
               />
             </TabsContent>
@@ -304,9 +293,9 @@ export function EditorWizard({
             ) : (
               <Button
                 onClick={handleSave}
-                disabled={!isValid || isSaving}
+                disabled={!isValid || isValidating}
               >
-                {isSaving ? 'Saving...' : 'Save Specification'}
+                Save Specification
               </Button>
             )}
           </div>
