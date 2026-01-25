@@ -1,0 +1,134 @@
+openapi: 3.1.0
+info:
+  title: Airport Search API
+  version: 1.0.0
+  summary: API for searching airport information with autocomplete functionality.
+servers:
+  - url: https://api.example.com/v2
+paths:
+  /airport/search:
+    get:
+      operationId: searchAirports
+      summary: Search for airports using autocomplete
+      description: Retrieve airport information based on user input with autocomplete suggestions.
+      parameters:
+        - name: query
+          in: query
+          required: true
+          description: Input text from user for searching airports.
+          schema:
+            type: string
+            example: "AM"
+        - name: showTags
+          in: query
+          required: true
+          description: Existing rules for showing tags.
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Successful response with airport search results.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FlightAutoCompleteResponse'
+        '400':
+          description: Bad request due to invalid input.
+        '401':
+          description: Unauthorized access.
+        '404':
+          description: No airports found matching the query.
+        '500':
+          description: Internal server error.
+components:
+  schemas:
+    FlightAutoCompleteRequest:
+      type: object
+      properties:
+        query:
+          type: string
+          example: "AM"
+        showTags:
+          type: boolean
+      required:
+        - query
+        - showTags
+
+    FlightAutoCompleteResponse:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "Ja"
+        sections:
+          type: array
+          items:
+            $ref: '#/components/schemas/Section'
+      required:
+        - name
+        - sections
+
+    Section:
+      type: object
+      properties:
+        type:
+          type: string
+          nullable: true
+          example: "Your Frequent Searches"
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/PointOfInterest'
+      required:
+        - results
+
+    PointOfInterest:
+      type: object
+      properties:
+        code:
+          type: string
+          nullable: true
+          example: "CGK"
+        name:
+          type: string
+          example: "_JKTA"
+        displayData:
+          $ref: '#/components/schemas/DisplayData'
+        location:
+          type: string
+          nullable: true
+          example: "Jakarta"
+        ucatKey:
+          type: string
+          nullable: true
+          example: "INDONESIA"
+        score:
+          type: integer
+      required:
+        - name
+        - score
+
+    DisplayData:
+      type: object
+      properties:
+        subtitle:
+          type: string
+          nullable: true
+          example: "Soekarno Hatta International Airport (CGK)"
+        tagCopy:
+          type: string
+          nullable: true
+          example: "Jakarta, Indonesia"
+
+    FlightAutocompleteAirportTag:
+      type: object
+      properties:
+        tagName:
+          type: string
+          example: "15 KM away"
+        tagColor:
+          type: string
+          example: "Current value follow BM Style"
+      required:
+        - tagName
+        - tagColor
