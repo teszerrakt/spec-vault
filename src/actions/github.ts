@@ -1,7 +1,7 @@
 'use server'
 
 import { auth } from '@/auth'
-import { createRepository } from '@/lib/repository'
+import { createConfiguredRepository } from '@/lib/repository'
 import { generatePRContent } from '@/lib/ai/pr-generator'
 import {
   checkUserPermission,
@@ -59,27 +59,17 @@ export interface GeneratePRContentResult {
 export async function getContractHistory(filePath: string): Promise<ContractVersion[]> {
   const session = await auth()
 
-  const owner = process.env.GITHUB_OWNER
-  const repoName = process.env.GITHUB_REPO
-
-  if (!owner || !repoName) {
+  if (!session?.accessToken) {
     return []
   }
 
-  // Get platform config for correct settings
-  const platformConfig = session?.accessToken
-    ? await getPlatformConfig(session.accessToken, owner, repoName)
-    : { defaultBranch: 'main', contractsPath: 'contracts', version: 1 }
-
-  const repo = createRepository({
-    accessToken: session?.accessToken,
-    owner,
-    repo: repoName,
-    defaultBranch: platformConfig.defaultBranch,
-    contractsPath: platformConfig.contractsPath,
-  })
-
-  return repo.getHistory(filePath)
+  try {
+    const repo = await createConfiguredRepository(session.accessToken)
+    return repo.getHistory(filePath)
+  } catch (error) {
+    console.error('Failed to get contract history:', error)
+    return []
+  }
 }
 
 /**
@@ -119,36 +109,17 @@ export async function submitForReview(
     }
   }
 
-  const owner = process.env.GITHUB_OWNER
-  const repoName = process.env.GITHUB_REPO
-
-  if (!owner || !repoName) {
-    return {
-      success: false,
-      error: 'Repository not configured. Set GITHUB_OWNER and GITHUB_REPO environment variables.',
-    }
-  }
-
-  // Get platform config for correct defaultBranch and contractsPath
-  const platformConfig = await getPlatformConfig(session.accessToken, owner, repoName)
-
-  const repo = createRepository({
-    accessToken: session.accessToken,
-    owner,
-    repo: repoName,
-    defaultBranch: platformConfig.defaultBranch,
-    contractsPath: platformConfig.contractsPath,
-  })
-
-  // Check if repository supports PR creation
-  if (!repo.createPullRequest || !repo.createBranch) {
-    return {
-      success: false,
-      error: 'Pull request creation is only supported with GitHub repositories.',
-    }
-  }
-
   try {
+    const repo = await createConfiguredRepository(session.accessToken)
+
+    // Check if repository supports PR creation
+    if (!repo.createPullRequest || !repo.createBranch) {
+      return {
+        success: false,
+        error: 'Pull request creation is only supported with GitHub repositories.',
+      }
+    }
+
     // Generate branch name
     const branchName = options.branchName || generateBranchName(options.filePath)
 
@@ -228,35 +199,16 @@ export async function createPullRequest(
     }
   }
 
-  const owner = process.env.GITHUB_OWNER
-  const repoName = process.env.GITHUB_REPO
-
-  if (!owner || !repoName) {
-    return {
-      success: false,
-      error: 'Repository not configured.',
-    }
-  }
-
-  // Get platform config for correct defaultBranch
-  const platformConfig = await getPlatformConfig(session.accessToken, owner, repoName)
-
-  const repo = createRepository({
-    accessToken: session.accessToken,
-    owner,
-    repo: repoName,
-    defaultBranch: platformConfig.defaultBranch,
-    contractsPath: platformConfig.contractsPath,
-  })
-
-  if (!repo.createPullRequest) {
-    return {
-      success: false,
-      error: 'Pull request creation is only supported with GitHub repositories.',
-    }
-  }
-
   try {
+    const repo = await createConfiguredRepository(session.accessToken)
+
+    if (!repo.createPullRequest) {
+      return {
+        success: false,
+        error: 'Pull request creation is only supported with GitHub repositories.',
+      }
+    }
+
     const base = baseBranch || repo.getDefaultBranch?.() || 'main'
     const pr = await repo.createPullRequest({
       title,
@@ -571,11 +523,7 @@ export async function validateRepositoryConnection(): Promise<ValidateConnection
     let contractsCount = 0
     if (canRead) {
       try {
-        const repository = createRepository({
-          accessToken: session.accessToken,
-          owner,
-          repo,
-        })
+        const repository = await createConfiguredRepository(session.accessToken)
         const contracts = await repository.listContracts()
         contractsCount = contracts.length
       } catch {

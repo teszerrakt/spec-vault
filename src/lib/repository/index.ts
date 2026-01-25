@@ -1,10 +1,10 @@
 import type { ContractRepository } from './types'
 import { LocalContractRepository } from './local'
-import { GitHubContractRepository } from './github'
+import { GitHubContractRepository, getPlatformConfig } from './github'
 
 export type { ContractRepository, ListContractsOptions, SaveResult, PROptions, PullRequestResult } from './types'
 export { LocalContractRepository } from './local'
-export { GitHubContractRepository } from './github'
+export { GitHubContractRepository, getPlatformConfig } from './github'
 
 interface RepositoryOptions {
   /** GitHub access token (required for GitHub repository) */
@@ -59,4 +59,35 @@ export function createRepository(options: RepositoryOptions = {}): ContractRepos
  */
 export function isDevelopmentMode(): boolean {
   return process.env.NODE_ENV === 'development' && !process.env.GITHUB_OWNER
+}
+
+/**
+ * Create a GitHub repository configured with platform settings.
+ * Reads the platform config from the repository and returns a configured instance.
+ *
+ * @param accessToken - GitHub access token
+ * @returns Configured ContractRepository
+ * @throws Error if not configured or config fails to load
+ */
+export async function createConfiguredRepository(
+  accessToken: string
+): Promise<ContractRepository> {
+  const owner = process.env.GITHUB_OWNER
+  const repo = process.env.GITHUB_REPO
+
+  if (!owner || !repo) {
+    throw new Error(
+      'Repository not configured. Set GITHUB_OWNER and GITHUB_REPO environment variables.'
+    )
+  }
+
+  const platformConfig = await getPlatformConfig(accessToken, owner, repo)
+
+  return new GitHubContractRepository({
+    accessToken,
+    owner,
+    repo,
+    defaultBranch: platformConfig.defaultBranch,
+    contractsPath: platformConfig.contractsPath,
+  })
 }

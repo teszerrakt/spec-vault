@@ -1,7 +1,7 @@
 'use server'
 
 import { auth } from '@/auth'
-import { createRepository } from '@/lib/repository'
+import { createConfiguredRepository } from '@/lib/repository'
 import type { APIContract } from '@/types'
 
 /**
@@ -15,16 +15,21 @@ export async function listContracts(options?: {
 }): Promise<APIContract[]> {
   const session = await auth()
 
-  const repo = createRepository({
-    accessToken: session?.accessToken,
-    owner: process.env.GITHUB_OWNER,
-    repo: process.env.GITHUB_REPO,
-  })
+  if (!session?.accessToken) {
+    return []
+  }
 
-  return repo.listContracts({
-    path: options?.path,
-    includeValidation: options?.includeValidation ?? false,
-  })
+  try {
+    const repo = await createConfiguredRepository(session.accessToken)
+
+    return repo.listContracts({
+      path: options?.path,
+      includeValidation: options?.includeValidation ?? false,
+    })
+  } catch (error) {
+    console.error('Failed to list contracts:', error)
+    return []
+  }
 }
 
 /**
@@ -35,11 +40,11 @@ export async function listContracts(options?: {
 export async function getContract(filePath: string): Promise<APIContract> {
   const session = await auth()
 
-  const repo = createRepository({
-    accessToken: session?.accessToken,
-    owner: process.env.GITHUB_OWNER,
-    repo: process.env.GITHUB_REPO,
-  })
+  if (!session?.accessToken) {
+    throw new Error('Unauthorized - please sign in')
+  }
+
+  const repo = await createConfiguredRepository(session.accessToken)
 
   return repo.getContract(filePath)
 }
@@ -89,16 +94,12 @@ export async function saveContract(
   commitMessage: string
 ): Promise<SaveResult> {
   const session = await auth()
-  if (!session) {
+  if (!session?.accessToken) {
     return { success: false, error: 'Unauthorized - please sign in' }
   }
 
   try {
-    const repo = createRepository({
-      accessToken: session.accessToken,
-      owner: process.env.GITHUB_OWNER,
-      repo: process.env.GITHUB_REPO,
-    })
+    const repo = await createConfiguredRepository(session.accessToken)
 
     const result = await repo.saveContract(filePath, content, commitMessage)
 
@@ -126,16 +127,12 @@ export async function deleteContract(
   commitMessage: string
 ): Promise<SaveResult> {
   const session = await auth()
-  if (!session) {
+  if (!session?.accessToken) {
     return { success: false, error: 'Unauthorized - please sign in' }
   }
 
   try {
-    const repo = createRepository({
-      accessToken: session.accessToken,
-      owner: process.env.GITHUB_OWNER,
-      repo: process.env.GITHUB_REPO,
-    })
+    const repo = await createConfiguredRepository(session.accessToken)
 
     await repo.deleteContract(filePath, commitMessage)
 
