@@ -65,7 +65,8 @@ export async function getContractHistory(filePath: string): Promise<ContractVers
 
   try {
     const repo = await createConfiguredRepository(session.accessToken)
-    return repo.getHistory(filePath)
+    const history = await repo.getHistory(filePath)
+    return history
   } catch (error) {
     console.error('Failed to get contract history:', error)
     return []

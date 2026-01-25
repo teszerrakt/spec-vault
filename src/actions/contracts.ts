@@ -2,7 +2,9 @@
 
 import { auth } from '@/auth'
 import { createConfiguredRepository } from '@/lib/repository'
-import type { APIContract } from '@/types'
+// Import directly from generator (server-only, uses Node.js modules)
+import { generateChangelog as generateChangelogFromSpecs } from '@/lib/changelog/generator'
+import type { APIContract, ChangelogEntry } from '@/types'
 
 /**
  * List all contracts in the repository.
@@ -143,4 +145,38 @@ export async function deleteContract(
       error: error instanceof Error ? error.message : 'Unknown error',
     }
   }
+}
+
+/**
+ * Generate a changelog comparing two versions of a contract.
+ * @param contractPath - Path to the contract file
+ * @param fromCommitSha - Source/older version commit SHA
+ * @param toCommitSha - Destination/newer version commit SHA
+ * @returns Changelog entry with all detected changes
+ */
+export async function generateChangelogAction(
+  contractPath: string,
+  fromCommitSha: string,
+  toCommitSha: string
+): Promise<ChangelogEntry> {
+  const session = await auth()
+
+  if (!session?.accessToken) {
+    throw new Error('Unauthorized - please sign in')
+  }
+
+  const repo = await createConfiguredRepository(session.accessToken)
+
+  // Fetch content at both commits
+  if (!repo.getContractAtCommit) {
+    throw new Error('Repository does not support version comparison')
+  }
+
+  const [fromYaml, toYaml] = await Promise.all([
+    repo.getContractAtCommit(contractPath, fromCommitSha),
+    repo.getContractAtCommit(contractPath, toCommitSha),
+  ])
+
+  // Generate the changelog
+  return generateChangelogFromSpecs(fromYaml, toYaml, contractPath, fromCommitSha, toCommitSha)
 }

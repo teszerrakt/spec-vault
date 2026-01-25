@@ -247,22 +247,22 @@ Based on plan.md structure:
 
 ### Changelog Service for US6
 
-- [ ] T076 [US6] Create changelog generator in `src/lib/changelog/generator.ts` (using openapi-diff)
-- [ ] T077 [US6] Create changelog formatter in `src/lib/changelog/formatter.ts` (human-readable output)
+- [x] T076 [US6] Create changelog generator in `src/lib/changelog/generator.ts` (using openapi-diff)
+- [x] T077 [US6] Create changelog formatter in `src/lib/changelog/formatter.ts` (human-readable output)
 
 ### Server Actions for US6
 
-- [ ] T078 [US6] Create `generateChangelog` Server Action in `src/actions/contracts.ts`
+- [x] T078 [US6] Create `generateChangelog` Server Action in `src/actions/contracts.ts`
 
 ### UI Components for US6
 
-- [ ] T079 [P] [US6] Create ChangelogViewer component in `src/components/contracts/changelog-viewer.tsx`
-- [ ] T080 [P] [US6] Create ChangeItem component in `src/components/contracts/change-item.tsx`
-- [ ] T081 [P] [US6] Create VersionCompare component in `src/components/contracts/version-compare.tsx`
+- [x] T079 [P] [US6] Create ChangelogViewer component in `src/components/contracts/changelog-viewer.tsx`
+- [x] T080 [P] [US6] Create ChangeItem component in `src/components/contracts/change-item.tsx`
+- [x] T081 [P] [US6] Create VersionCompare component in `src/components/contracts/version-compare.tsx`
 
 ### Integration for US6
 
-- [ ] T082 [US6] Add changelog to version history in `src/components/contracts/history-panel.tsx`
+- [x] T082 [US6] Add changelog to version history in `src/components/contracts/history-panel.tsx`
 
 **Checkpoint**: Users can view auto-generated changelogs between versions
 

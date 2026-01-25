@@ -137,5 +137,15 @@ export class LocalContractRepository implements ContractRepository {
     return []
   }
 
+  async getContractAtCommit(filePath: string, _commitSha: string): Promise<string> {
+    // Local filesystem doesn't track versions, return current content
+    const fullPath = path.join(this.basePath, filePath)
+    try {
+      return await fs.readFile(fullPath, 'utf-8')
+    } catch {
+      throw new Error(`Contract not found: ${filePath}`)
+    }
+  }
+
   // createPullRequest is not implemented for local repository
 }

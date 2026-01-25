@@ -244,6 +244,7 @@ export class GitHubContractRepository implements ContractRepository {
       owner: this.owner,
       repo: this.repo,
       path: fullPath,
+      sha: this.defaultBranch,
       per_page: 50,
     })
 
@@ -299,6 +300,34 @@ export class GitHubContractRepository implements ContractRepository {
    */
   getDefaultBranch(): string {
     return this.defaultBranch
+  }
+
+  /**
+   * Get contract content at a specific commit.
+   * Used for comparing versions and generating changelogs.
+   */
+  async getContractAtCommit(filePath: string, commitSha: string): Promise<string> {
+    const fullPath = `${this.contractsPath}/${filePath}`
+
+    try {
+      const { data: fileData } = await this.octokit.repos.getContent({
+        owner: this.owner,
+        repo: this.repo,
+        path: fullPath,
+        ref: commitSha,
+      })
+
+      if (Array.isArray(fileData) || fileData.type !== 'file') {
+        throw new Error(`Expected file at ${fullPath}`)
+      }
+
+      return Buffer.from(fileData.content, 'base64').toString('utf-8')
+    } catch (error) {
+      if (this.isNotFoundError(error)) {
+        throw new Error(`Contract not found at commit ${commitSha.slice(0, 7)}: ${filePath}`)
+      }
+      throw error
+    }
   }
 
   private isNotFoundError(error: unknown): boolean {

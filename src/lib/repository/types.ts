@@ -112,4 +112,13 @@ export interface ContractRepository {
    * @returns Default branch name (e.g., 'main')
    */
   getDefaultBranch?(): string
+
+  /**
+   * Get contract content at a specific commit.
+   * Used for comparing versions and generating changelogs.
+   * @param filePath - Path to the contract file
+   * @param commitSha - Git commit SHA
+   * @returns Raw YAML content of the contract at that commit
+   */
+  getContractAtCommit?(filePath: string, commitSha: string): Promise<string>
 }
