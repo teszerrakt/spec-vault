@@ -1,7 +1,7 @@
 'use client'
 
 import { CheckCircle, FileCode, Loader2, Sparkles } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { cn } from '@/lib/utils'
@@ -13,6 +13,8 @@ interface ProcessingIndicatorProps {
   elapsedMs?: number
   /** Whether processing is complete */
   isComplete?: boolean
+  /** Streaming YAML content (partial output during generation) */
+  streamingYaml?: string
 }
 
 const stages = {
@@ -20,19 +22,19 @@ const stages = {
     title: 'Parsing Input',
     description: 'Reading and parsing your file...',
     icon: FileCode,
-    progress: 25,
+    progress: 15,
   },
   analyzing: {
     title: 'Analyzing Content',
     description: 'AI is analyzing your API documentation...',
     icon: Sparkles,
-    progress: 50,
+    progress: 25,
   },
   generating: {
     title: 'Generating OpenAPI',
     description: 'Creating your OpenAPI specification...',
     icon: Sparkles,
-    progress: 75,
+    progress: 50,
   },
   validating: {
     title: 'Validating Spec',
@@ -46,17 +48,25 @@ export function ProcessingIndicator({
   stage = 'analyzing',
   elapsedMs,
   isComplete = false,
+  streamingYaml = '',
 }: ProcessingIndicatorProps) {
   const [animatedProgress, setAnimatedProgress] = useState(() => (isComplete ? 100 : 0))
   const [dots, setDots] = useState('')
+  const previewRef = useRef<HTMLPreElement>(null)
 
   const currentStage = stages[stage]
+  const hasStreamingContent = streamingYaml.length > 0
 
-  // Calculate target progress based on state
-  const targetProgress = useMemo(
-    () => (isComplete ? 100 : currentStage.progress),
-    [isComplete, currentStage.progress]
-  )
+  // Calculate target progress based on state and streaming content
+  const targetProgress = useMemo(() => {
+    if (isComplete) return 100
+    if (hasStreamingContent) {
+      // Progress based on content length (rough estimate: ~4000 chars for full spec)
+      const contentProgress = Math.min(streamingYaml.length / 4000, 0.85) * 100
+      return Math.max(currentStage.progress, Math.round(contentProgress))
+    }
+    return currentStage.progress
+  }, [isComplete, currentStage.progress, hasStreamingContent, streamingYaml.length])
 
   // Animate progress bar
   useEffect(() => {
@@ -83,6 +93,14 @@ export function ProcessingIndicator({
     return () => clearInterval(interval)
   }, [isComplete])
 
+  // Auto-scroll to bottom of preview when content changes
+  const contentLength = streamingYaml.length
+  useEffect(() => {
+    if (previewRef.current && contentLength > 0) {
+      previewRef.current.scrollTop = previewRef.current.scrollHeight
+    }
+  }, [contentLength])
+
   const formatTime = (ms: number): string => {
     if (ms < 1000) return `${ms}ms`
     return `${(ms / 1000).toFixed(1)}s`
@@ -90,7 +108,7 @@ export function ProcessingIndicator({
 
   return (
     <Card className="border-primary/20 bg-primary/5">
-      <CardHeader className="text-center">
+      <CardHeader className="text-center pb-4">
         <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
           {isComplete ? (
             <CheckCircle className="h-8 w-8 text-primary" />
@@ -113,9 +131,28 @@ export function ProcessingIndicator({
           {elapsedMs !== undefined && <span>Elapsed: {formatTime(elapsedMs)}</span>}
         </div>
 
-        {!isComplete && (
+        {/* Streaming YAML Preview */}
+        {hasStreamingContent && !isComplete && (
+          <div className="mt-4 rounded-lg border bg-muted/50 overflow-hidden">
+            <div className="px-3 py-2 border-b bg-muted/80 flex items-center justify-between">
+              <span className="text-xs font-medium text-muted-foreground">Live Preview</span>
+              <span className="text-xs text-muted-foreground">
+                {streamingYaml.length.toLocaleString()} chars
+              </span>
+            </div>
+            <pre
+              ref={previewRef}
+              className="p-3 text-xs font-mono overflow-auto max-h-64 text-foreground/80"
+            >
+              {streamingYaml}
+              <span className="animate-pulse">▌</span>
+            </pre>
+          </div>
+        )}
+
+        {!isComplete && !hasStreamingContent && (
           <div className="text-center text-sm text-muted-foreground">
-            <p>This may take up to 30 seconds depending on the complexity of your input.</p>
+            <p>This may take up to 60 seconds depending on the complexity of your input.</p>
           </div>
         )}
       </CardContent>

@@ -1,11 +1,5 @@
-import { convertToOpenAPI } from '@/lib/ai/converter'
-import type {
-  ConversionResult,
-  ImportSource,
-  ImportSourceType,
-  ParsedImportSource,
-} from '@/types/import'
-import { arrayBufferToBase64, processImageSource } from './image-processor'
+import type { ImportSource, ImportSourceType, ParsedImportSource } from '@/types/import'
+import { processImageSource } from './image-processor'
 
 /**
  * Accepted file extensions for upload.
@@ -90,57 +84,6 @@ export function parseImportSource(source: ImportSource): ParsedImportSource {
     textContent: content,
     structuredData: null,
   }
-}
-
-/**
- * Process an import source and convert to OpenAPI.
- */
-export async function processImport(source: ImportSource): Promise<ConversionResult> {
-  // Validate file size
-  const contentSize =
-    typeof source.content === 'string'
-      ? new TextEncoder().encode(source.content).length
-      : source.content.byteLength
-
-  const sizeValidation = validateFileSize(contentSize)
-  if (!sizeValidation.valid) {
-    return {
-      yaml: '',
-      isValid: false,
-      errors: [sizeValidation.error!],
-      model: 'none',
-      processingTimeMs: 0,
-    }
-  }
-
-  // Parse the source
-  const parsed = parseImportSource(source)
-
-  // Handle image sources - need base64 for vision
-  if (source.type === 'image') {
-    const buffer = typeof source.content === 'string' ? null : source.content
-    if (!buffer) {
-      return {
-        yaml: '',
-        isValid: false,
-        errors: ['Image content must be provided as ArrayBuffer'],
-        model: 'none',
-        processingTimeMs: 0,
-      }
-    }
-
-    return convertToOpenAPI({
-      sourceType: 'image',
-      imageData: arrayBufferToBase64(buffer),
-      imageMimeType: source.mimeType,
-    })
-  }
-
-  // For text, send to AI directly
-  return convertToOpenAPI({
-    sourceType: 'text',
-    textContent: parsed.textContent,
-  })
 }
 
 /**
