@@ -17,7 +17,6 @@ import { Textarea } from '@/components/ui/textarea'
 import type { OpenAPIObject } from '@/types'
 
 const SECURITY_SCHEME_TYPES = ['apiKey', 'http', 'oauth2', 'openIdConnect'] as const
-type _SecuritySchemeType = (typeof SECURITY_SCHEME_TYPES)[number]
 
 const API_KEY_LOCATIONS = ['header', 'query', 'cookie'] as const
 const HTTP_SCHEMES = ['bearer', 'basic'] as const

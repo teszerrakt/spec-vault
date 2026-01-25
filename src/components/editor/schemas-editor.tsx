@@ -16,11 +16,8 @@ import {
 import type { OpenAPIObject } from '@/types'
 
 const SCHEMA_TYPES = ['object', 'array', 'string', 'number', 'integer', 'boolean'] as const
-type _SchemaType = (typeof SCHEMA_TYPES)[number]
 
 const STRING_FORMATS = ['', 'date', 'date-time', 'email', 'uri', 'uuid', 'hostname', 'ipv4', 'ipv6']
-const _NUMBER_FORMATS = ['', 'float', 'double']
-const _INTEGER_FORMATS = ['', 'int32', 'int64']
 
 interface SchemasEditorProps {
   spec: OpenAPIObject | null
