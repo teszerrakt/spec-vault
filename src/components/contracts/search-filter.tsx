@@ -1,7 +1,8 @@
 'use client'
 
-import { useCallback, useState, useTransition } from 'react'
+import { useCallback, useState, useTransition, useRef, useEffect } from 'react'
 import { Input } from '@/components/ui/input'
+import { Kbd } from '@/components/ui/kbd'
 import { cn } from '@/lib/utils'
 
 interface SearchFilterProps {
@@ -17,6 +18,7 @@ export function SearchFilter({
 }: SearchFilterProps) {
   const [query, setQuery] = useState('')
   const [isPending, startTransition] = useTransition()
+  const inputRef = useRef<HTMLInputElement>(null)
 
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -31,20 +33,43 @@ export function SearchFilter({
     [onSearch]
   )
 
+  // Keyboard shortcut: "/" to focus search
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger if user is in an input field
+      const target = e.target as HTMLElement
+      const isInput =
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.isContentEditable
+
+      if (e.key === '/' && !isInput) {
+        e.preventDefault()
+        inputRef.current?.focus()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
+
   return (
     <div className={cn('relative', className)}>
       <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
       <Input
+        ref={inputRef}
         type="search"
         placeholder={placeholder}
         value={query}
         onChange={handleChange}
-        className={cn('pl-9', isPending && 'opacity-70')}
+        className={cn('pl-9 pr-10', isPending && 'opacity-70')}
       />
-      {isPending && (
+      {isPending ? (
         <div className="absolute right-3 top-1/2 -translate-y-1/2">
           <div className="h-4 w-4 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
         </div>
+      ) : (
+        <Kbd className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">/</Kbd>
       )}
     </div>
   )

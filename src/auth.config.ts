@@ -26,7 +26,8 @@ export default {
       const isLoggedIn = !!auth?.user
       const isOnDashboard = nextUrl.pathname.startsWith('/contracts') ||
         nextUrl.pathname.startsWith('/import') ||
-        nextUrl.pathname.startsWith('/settings')
+        nextUrl.pathname.startsWith('/settings') ||
+        nextUrl.pathname.startsWith('/edit')
       
       if (isOnDashboard) {
         if (isLoggedIn) return true

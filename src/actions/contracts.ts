@@ -5,6 +5,10 @@ import { createConfiguredRepository } from '@/lib/repository'
 // Import directly from generator (server-only, uses Node.js modules)
 import { generateChangelog as generateChangelogFromSpecs } from '@/lib/changelog/generator'
 import type { APIContract, ChangelogEntry } from '@/types'
+import type { PaginatedResult } from '@/lib/repository/types'
+
+/** Default number of contracts per page */
+const DEFAULT_PAGE_SIZE = 20
 
 /**
  * List all contracts in the repository.
@@ -31,6 +35,66 @@ export async function listContracts(options?: {
   } catch (error) {
     console.error('Failed to list contracts:', error)
     return []
+  }
+}
+
+/**
+ * List contracts with pagination support.
+ * @param options - Filtering and pagination options
+ * @returns Paginated result with contracts
+ */
+export async function listContractsPaginated(options?: {
+  path?: string
+  includeValidation?: boolean
+  page?: number
+  limit?: number
+}): Promise<PaginatedResult<APIContract>> {
+  const session = await auth()
+  const page = options?.page ?? 1
+  const limit = options?.limit ?? DEFAULT_PAGE_SIZE
+
+  if (!session?.accessToken) {
+    return {
+      items: [],
+      total: 0,
+      page,
+      limit,
+      totalPages: 0,
+    }
+  }
+
+  try {
+    const repo = await createConfiguredRepository(session.accessToken)
+
+    // Get all contracts (repository doesn't support native pagination)
+    const allContracts = await repo.listContracts({
+      path: options?.path,
+      includeValidation: options?.includeValidation ?? false,
+    })
+
+    // Calculate pagination
+    const total = allContracts.length
+    const totalPages = Math.ceil(total / limit)
+    const startIndex = (page - 1) * limit
+    const endIndex = startIndex + limit
+    const items = allContracts.slice(startIndex, endIndex)
+
+    return {
+      items,
+      total,
+      page,
+      limit,
+      totalPages,
+    }
+  } catch (error) {
+    console.error('Failed to list contracts:', error)
+    return {
+      items: [],
+      total: 0,
+      page,
+      limit,
+      totalPages: 0,
+    }
   }
 }
 

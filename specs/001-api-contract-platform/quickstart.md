@@ -1,7 +1,7 @@
 # Quickstart: API Contract Platform
 
 **Feature**: 001-api-contract-platform  
-**Date**: 2026-01-23
+**Date**: 2026-01-25
 
 ## Prerequisites
 
@@ -17,7 +17,7 @@
 ```bash
 # Clone the repository
 git clone <repository-url>
-cd api-contract-platform
+cd spec-vault
 
 # Install dependencies
 pnpm install
@@ -34,20 +34,20 @@ cp .env.example .env.local
 Configure the following environment variables:
 
 ```env
-# NextAuth.js Configuration
-NEXTAUTH_URL=http://localhost:3000
-NEXTAUTH_SECRET=<generate-with: openssl rand -base64 32>
-
 # GitHub OAuth App
 # Create at: https://github.com/settings/developers
 GITHUB_CLIENT_ID=your_client_id
 GITHUB_CLIENT_SECRET=your_client_secret
 
+# NextAuth.js Secret (generate with: pnpm dlx auth secret)
+AUTH_SECRET=your_auth_secret
+
+# GitHub Repository Configuration (REQUIRED)
+GITHUB_OWNER=your-org-or-username
+GITHUB_REPO=api-contracts
+
 # AI Provider (Vercel AI SDK)
-# At least one provider required
 OPENAI_API_KEY=sk-...
-# OR
-ANTHROPIC_API_KEY=sk-ant-...
 ```
 
 ### 3. GitHub OAuth App Setup
@@ -55,7 +55,7 @@ ANTHROPIC_API_KEY=sk-ant-...
 1. Go to [GitHub Developer Settings](https://github.com/settings/developers)
 2. Click "New OAuth App"
 3. Configure:
-   - **Application name**: API Contract Platform (Dev)
+   - **Application name**: Spec Vault (Dev)
    - **Homepage URL**: `http://localhost:3000`
    - **Authorization callback URL**: `http://localhost:3000/api/auth/callback/github`
 4. Copy Client ID and Client Secret to `.env.local`
@@ -76,7 +76,8 @@ src/
 │   ├── (auth)/              # Public auth routes
 │   │   └── login/           # Login page
 │   ├── (dashboard)/         # Protected routes (require auth)
-│   │   ├── contracts/       # Contract list, view, edit
+│   │   ├── contracts/       # Contract list, view
+│   │   ├── edit/            # Contract editor
 │   │   ├── import/          # Import wizard
 │   │   └── settings/        # Repository configuration
 │   └── api/                 # Route Handlers (minimal)
@@ -90,11 +91,22 @@ src/
 ├── auth.config.ts           # Edge-compatible auth config
 ├── middleware.ts            # Route protection
 ├── components/              # React components
+│   ├── contracts/           # Contract-related components
+│   ├── editor/              # Editor section components
+│   ├── settings/            # Settings components
+│   ├── ui/                  # shadcn/ui components
+│   └── wizard/              # Import wizard components
+├── hooks/                   # Custom React hooks
 ├── lib/
+│   ├── ai/                  # AI conversion (Vercel AI SDK)
+│   ├── changelog/           # Changelog generation
+│   ├── import/              # File processors (CSV, JSON, etc.)
+│   ├── openapi/             # OpenAPI parser/validator
 │   └── repository/          # ContractRepository pattern
 │       ├── types.ts         # Interface
 │       ├── github.ts        # GitHub (Octokit)
-│       └── local.ts         # Local filesystem
+│       ├── local.ts         # Local filesystem
+│       └── index.ts         # Factory
 ├── machines/                # XState state machines
 └── types/                   # TypeScript definitions
 ```
@@ -110,15 +122,11 @@ pnpm start              # Start production server
 # Testing
 pnpm test               # Run Vitest unit tests
 pnpm test:e2e           # Run Playwright E2E tests
-pnpm test:coverage      # Generate coverage report
 
 # Code Quality
 pnpm lint               # ESLint
-pnpm typecheck          # TypeScript check
+pnpm tsc --noEmit       # TypeScript check
 pnpm format             # Prettier
-
-# OpenAPI
-pnpm validate:contracts # Validate all OpenAPI specs
 ```
 
 ## Authentication Flow
@@ -155,26 +163,30 @@ All data operations use Server Actions with the ContractRepository pattern:
 "use server";
 
 import { auth } from "@/auth";
-import { getRepository } from "@/lib/repository";
+import { createConfiguredRepository } from "@/lib/repository";
 
 export async function listContracts() {
   const session = await auth();
-  if (!session) throw new Error("Unauthorized");
+  if (!session?.accessToken) {
+    return [];
+  }
   
-  const repo = await getRepository(session);
+  const repo = await createConfiguredRepository(session.accessToken);
   return repo.listContracts();
 }
 
 export async function saveContract(
   filePath: string,
-  spec: OpenAPIObject,
+  content: string,
   commitMessage: string
 ) {
   const session = await auth();
-  if (!session) throw new Error("Unauthorized");
+  if (!session?.accessToken) {
+    return { success: false, error: "Unauthorized" };
+  }
   
-  const repo = await getRepository(session);
-  return repo.saveContract(filePath, spec, commitMessage);
+  const repo = await createConfiguredRepository(session.accessToken);
+  return repo.saveContract(filePath, content, commitMessage);
 }
 ```
 
@@ -182,10 +194,12 @@ export async function saveContract(
 
 ```typescript
 "use client";
+import { useEffect, useState } from "react";
 import { listContracts } from "@/actions/contracts";
+import type { APIContract } from "@/types";
 
 export function ContractList() {
-  const [contracts, setContracts] = useState([]);
+  const [contracts, setContracts] = useState<APIContract[]>([]);
   
   useEffect(() => {
     listContracts().then(setContracts);
@@ -204,12 +218,21 @@ Abstracts GitHub vs Local filesystem:
 import { GitHubContractRepository } from "./github";
 import { LocalContractRepository } from "./local";
 
-export async function getRepository(session: Session): Promise<ContractRepository> {
-  if (process.env.NEXT_PUBLIC_DEV_MODE === "true") {
-    return new LocalContractRepository("./local-contracts");
+export async function createConfiguredRepository(
+  accessToken: string
+): Promise<ContractRepository> {
+  // Uses GITHUB_OWNER and GITHUB_REPO from environment
+  const owner = process.env.GITHUB_OWNER;
+  const repo = process.env.GITHUB_REPO;
+  
+  if (!owner || !repo) {
+    throw new Error("GITHUB_OWNER and GITHUB_REPO must be configured");
   }
   
-  return new GitHubContractRepository(session.repositoryConfig, session.accessToken);
+  return new GitHubContractRepository(
+    { owner, repo, defaultBranch: "main", contractsPath: "contracts" },
+    accessToken
+  );
 }
 ```
 
@@ -230,7 +253,11 @@ function ImportWizard() {
   
   return (
     <div>
-      {state.matches('selectSource') && <SourceSelector onSelect={(type) => send({ type: 'SELECT_SOURCE', sourceType: type })} />}
+      {state.matches('selectSource') && (
+        <SourceSelector 
+          onSelect={(type) => send({ type: 'SELECT_SOURCE', sourceType: type })} 
+        />
+      )}
       {state.matches('processing') && <ProcessingIndicator />}
       {/* ... */}
     </div>
@@ -238,25 +265,28 @@ function ImportWizard() {
 }
 ```
 
-## Local Development Mode
+## Keyboard Shortcuts
 
-For development without GitHub:
+The platform includes keyboard shortcuts for common actions:
 
-```env
-# .env.local
-NEXT_PUBLIC_DEV_MODE=true
-```
-
-In dev mode:
-- Contracts stored in `./local-contracts/` directory
-- No GitHub OAuth required
-- Mock session provided
+| Shortcut | Action | Location |
+|----------|--------|----------|
+| `/` | Focus search | Contracts page |
+| `Cmd/Ctrl + I` | Go to Import | Contracts page |
+| `Cmd/Ctrl + S` | Save | Editor |
+| `Cmd/Ctrl + Enter` | Submit | Dialogs |
+| `Escape` | Close dialog | All dialogs |
 
 ## Troubleshooting
 
-### "NEXTAUTH_SECRET is not set"
+### "AUTH_SECRET is not set"
 
 Generate a secret:
+```bash
+pnpm dlx auth secret
+```
+
+Or manually:
 ```bash
 openssl rand -base64 32
 ```
@@ -268,6 +298,14 @@ Verify your callback URL in GitHub OAuth App settings matches:
 http://localhost:3000/api/auth/callback/github
 ```
 
+### "GITHUB_OWNER and GITHUB_REPO must be configured"
+
+Ensure these environment variables are set in `.env.local`:
+```env
+GITHUB_OWNER=your-username-or-org
+GITHUB_REPO=your-contracts-repo
+```
+
 ### "Rate limit exceeded" from GitHub API
 
 GitHub API has rate limits (5000 requests/hour authenticated). The app caches responses where possible. For development, consider using a personal access token with higher limits.
@@ -275,7 +313,7 @@ GitHub API has rate limits (5000 requests/hour authenticated). The app caches re
 ### Build fails with type errors
 
 ```bash
-pnpm typecheck
+pnpm tsc --noEmit
 ```
 
 Review the TypeScript errors. Common issues:
@@ -284,7 +322,8 @@ Review the TypeScript errors. Common issues:
 
 ## Next Steps
 
-1. **Configure repository**: Go to Settings after login to connect a GitHub repository
-2. **Import first contract**: Use the Import wizard to convert existing API docs
-3. **Create from scratch**: Start with the guided editor for new contracts
-4. **Review contracts**: Make changes and create PRs for team review
+1. **Sign in with GitHub**: Click "Sign in" to authenticate with your GitHub account
+2. **Configure repository**: The repository is pre-configured via environment variables
+3. **Import first contract**: Use the Import wizard to convert existing API docs
+4. **Create from scratch**: Start with the guided editor for new contracts
+5. **Review contracts**: Make changes and create PRs for team review

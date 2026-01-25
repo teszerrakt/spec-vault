@@ -1,11 +1,14 @@
 'use client'
 
-import { useEffect, useCallback, useState } from 'react'
+import { useEffect, useCallback, useState, useRef } from 'react'
 import { useMachine } from '@xstate/react'
 import { useRouter } from 'next/navigation'
 import { Check, FileCode2, Server, Route, Database, Shield, Eye } from 'lucide-react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Kbd } from '@/components/ui/kbd'
+import { useKeyboardShortcut, getMetaKeyDisplay } from '@/hooks/use-keyboard-shortcut'
 import { editorWizardMachine, type EditorSection, getSectionName, getAllSections } from '@/machines/editor-wizard'
 import { InfoEditor } from './info-editor'
 import { ServersEditor } from './servers-editor'
@@ -52,6 +55,18 @@ export function EditorWizard({
 
   const { spec, yaml, currentSection, isValid, validationErrors, isDirty } =
     state.context
+
+  // Keyboard shortcut: Cmd/Ctrl + S to save
+  useKeyboardShortcut({
+    key: 's',
+    modifiers: ['meta'],
+    onTrigger: () => {
+      if (isValid && !state.matches({ editing: 'validating' })) {
+        setSaveDialogOpen(true)
+      }
+    },
+    enabled: state.matches('editing'),
+  })
 
   // Initialize the machine with the provided data
   useEffect(() => {
@@ -128,6 +143,31 @@ export function EditorWizard({
   const handleValidate = useCallback(() => {
     send({ type: 'VALIDATE' })
   }, [send])
+
+  // Show toast on validation completion
+  const prevValidationErrorsRef = useRef<number | null>(null)
+  useEffect(() => {
+    // Only show toast after validation, not on initial load
+    if (prevValidationErrorsRef.current === null) {
+      prevValidationErrorsRef.current = validationErrors.length
+      return
+    }
+
+    // Check if validation just completed (errors changed and we're in editing state)
+    if (state.matches('editing') && prevValidationErrorsRef.current !== validationErrors.length) {
+      if (isValid && validationErrors.length === 0) {
+        toast.success('Validation passed', {
+          description: 'Your specification is valid',
+        })
+      } else if (validationErrors.length > 0) {
+        toast.warning('Validation issues found', {
+          description: `${validationErrors.length} issue${validationErrors.length === 1 ? '' : 's'} to review`,
+        })
+      }
+    }
+
+    prevValidationErrorsRef.current = validationErrors.length
+  }, [validationErrors.length, isValid, state])
 
   const handleSave = useCallback(() => {
     // Open the save dialog instead of directly saving
@@ -294,8 +334,10 @@ export function EditorWizard({
               <Button
                 onClick={handleSave}
                 disabled={!isValid || isValidating}
+                className="gap-2"
               >
                 Save Specification
+                <Kbd className="ml-1">{getMetaKeyDisplay()}S</Kbd>
               </Button>
             )}
           </div>

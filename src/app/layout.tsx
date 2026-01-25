@@ -24,7 +24,7 @@ export default function RootLayout({
       <body className={`${inter.variable} font-sans antialiased`}>
         <SessionProvider>
           {children}
-          <Toaster />
+          <Toaster position="bottom-right" />
         </SessionProvider>
       </body>
     </html>

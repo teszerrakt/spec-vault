@@ -15,6 +15,8 @@ import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
+import { Kbd } from '@/components/ui/kbd'
+import { getMetaKeyDisplay } from '@/hooks/use-keyboard-shortcut'
 import { saveContract, type SaveResult } from '@/actions/contracts'
 import { PRDialog } from './pr-dialog'
 
@@ -282,9 +284,10 @@ export function SaveDialog({
                 )}
               </Button>
             ) : (
-              <Button onClick={handleSubmitForReview} disabled={!targetPath?.trim()}>
-                <GitPullRequest className="mr-2 h-4 w-4" />
+              <Button onClick={handleSubmitForReview} disabled={!targetPath?.trim()} className="gap-2">
+                <GitPullRequest className="h-4 w-4" />
                 Continue
+                <Kbd className="ml-1">{getMetaKeyDisplay()}↵</Kbd>
               </Button>
             )}
           </DialogFooter>

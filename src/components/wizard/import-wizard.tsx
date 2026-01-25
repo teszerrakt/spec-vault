@@ -4,6 +4,7 @@ import { useCallback, useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useMachine } from '@xstate/react'
 import { ArrowLeft, ArrowRight } from 'lucide-react'
+import { toast } from 'sonner'
 import { importWizardMachine, getStepName, getStepNumber, getTotalSteps } from '@/machines/import-wizard'
 import type { ImportSourceType } from '@/types/import'
 import { Button } from '@/components/ui/button'
@@ -55,6 +56,31 @@ export function ImportWizard({ initialSourceType }: ImportWizardProps) {
 
     return () => clearInterval(interval)
   }, [isProcessing])
+
+  // Show toast notifications on state transitions
+  const prevStateRef = useRef<string>('')
+  useEffect(() => {
+    const currentState = state.value as string
+    const prevState = prevStateRef.current
+
+    // Transition to preview = success
+    if (currentState === 'preview' && prevState === 'processing') {
+      toast.success('OpenAPI spec generated', {
+        description: state.context.isValid
+          ? 'Your specification is valid and ready to save'
+          : 'Generated with validation warnings - please review',
+      })
+    }
+
+    // Transition to error = failure
+    if (currentState === 'error' && prevState === 'processing') {
+      toast.error('Conversion failed', {
+        description: state.context.errorMessage || 'Unable to process your input',
+      })
+    }
+
+    prevStateRef.current = currentState
+  }, [state.value, state.context.isValid, state.context.errorMessage])
 
   // Event handlers
   const handleSourceSelect = useCallback(

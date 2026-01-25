@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { ExternalLinkIcon, Loader2Icon, AlertTriangleIcon } from 'lucide-react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -32,7 +33,6 @@ export function RepositorySettings({ config, isAdmin, branches }: RepositorySett
   const [isPending, startTransition] = useTransition()
   const [defaultBranch, setDefaultBranch] = useState(config.defaultBranch)
   const [contractsPath, setContractsPath] = useState(config.contractsPath)
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
   const hasChanges =
     defaultBranch !== config.defaultBranch || contractsPath !== config.contractsPath
@@ -44,11 +44,9 @@ export function RepositorySettings({ config, isAdmin, branches }: RepositorySett
   const handleReset = () => {
     setDefaultBranch(config.defaultBranch)
     setContractsPath(config.contractsPath)
-    setMessage(null)
   }
 
   const handleSave = () => {
-    setMessage(null)
     startTransition(async () => {
       const result = await saveRepositorySettings({
         defaultBranch,
@@ -56,9 +54,11 @@ export function RepositorySettings({ config, isAdmin, branches }: RepositorySett
       })
 
       if (result.success) {
-        setMessage({ type: 'success', text: 'Settings saved successfully.' })
+        toast.success('Settings saved successfully')
       } else {
-        setMessage({ type: 'error', text: result.error || 'Failed to save settings.' })
+        toast.error('Failed to save settings', {
+          description: result.error,
+        })
       }
     })
   }
@@ -83,12 +83,6 @@ export function RepositorySettings({ config, isAdmin, branches }: RepositorySett
             The configured branch &quot;{config.defaultBranch}&quot; no longer exists. 
             Please select a valid branch.
           </AlertDescription>
-        </Alert>
-      )}
-
-      {message && (
-        <Alert variant={message.type === 'error' ? 'destructive' : 'default'}>
-          <AlertDescription>{message.text}</AlertDescription>
         </Alert>
       )}
 

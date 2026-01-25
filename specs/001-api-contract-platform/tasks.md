@@ -307,15 +307,15 @@ Settings are stored in `.api-platform/config.json` within the repository.
 
 **Purpose**: Improvements that span multiple user stories
 
-- [ ] T092 [P] Add error boundaries to all pages
-- [ ] T093 [P] Add loading states with Suspense boundaries
-- [ ] T094 [P] Implement toast notifications for success/error feedback
-- [ ] T095 [P] Add keyboard shortcuts for common actions
-- [ ] T096 Implement pagination for contract list (large repositories)
+- [x] T092 [P] Add error boundaries to all pages
+- [x] T093 [P] Add loading states with Suspense boundaries
+- [x] T094 [P] Implement toast notifications for success/error feedback
+- [x] T095 [P] Add keyboard shortcuts for common actions
+- [x] T096 Implement pagination for contract list (large repositories)
 - [ ] T097 Code cleanup: remove unused imports, consolidate duplicate logic
 - [ ] T098 Performance audit: check bundle size, optimize imports
-- [ ] T099 Security audit: verify all sensitive operations are server-side
-- [ ] T100 Run quickstart.md validation to verify setup instructions
+- [x] T099 Security audit: verify all sensitive operations are server-side
+- [x] T100 Run quickstart.md validation to verify setup instructions
 
 ---
 

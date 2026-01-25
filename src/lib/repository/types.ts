@@ -1,6 +1,32 @@
 import type { APIContract, ContractVersion, OpenAPIObject } from '@/types'
 
 /**
+ * Pagination parameters
+ */
+export interface PaginationParams {
+  /** Page number (1-indexed) */
+  page?: number
+  /** Number of items per page */
+  limit?: number
+}
+
+/**
+ * Paginated result
+ */
+export interface PaginatedResult<T> {
+  /** Items for the current page */
+  items: T[]
+  /** Total number of items across all pages */
+  total: number
+  /** Current page number (1-indexed) */
+  page: number
+  /** Number of items per page */
+  limit: number
+  /** Total number of pages */
+  totalPages: number
+}
+
+/**
  * Result of saving a contract.
  */
 export interface SaveResult {
@@ -44,6 +70,8 @@ export interface ListContractsOptions {
   path?: string
   /** Include validation status */
   includeValidation?: boolean
+  /** Pagination parameters */
+  pagination?: PaginationParams
 }
 
 /**
