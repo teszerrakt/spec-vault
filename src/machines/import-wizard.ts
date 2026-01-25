@@ -451,9 +451,8 @@ export function getStepName(state: ImportWizardState): string {
     case 'inputContent':
       return 'Input'
     case 'processing':
-      return 'Generating'
     case 'validating':
-      return 'Validating'
+      return 'Processing'
     case 'preview':
       return 'Preview'
     case 'editing':
@@ -471,17 +470,22 @@ export function getStepName(state: ImportWizardState): string {
 
 /**
  * Get step number (1-indexed).
+ * Note: 'validating' is part of step 2 (Processing) from user's perspective.
  */
 export function getStepNumber(state: ImportWizardState): number {
-  const steps: ImportWizardState[] = [
-    'inputContent',
-    'processing',
-    'validating',
-    'preview',
-    'saving',
-  ]
-  const index = steps.indexOf(state)
-  return index === -1 ? 0 : index + 1
+  switch (state) {
+    case 'inputContent':
+      return 1
+    case 'processing':
+    case 'validating': // Part of processing step
+      return 2
+    case 'preview':
+    case 'editing':
+    case 'saving':
+      return 3
+    default:
+      return 0
+  }
 }
 
 /**
