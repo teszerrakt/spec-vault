@@ -1,7 +1,7 @@
-import { assign, fromPromise, setup } from 'xstate'
-import { processImageImportAction, processImportAction } from '@/actions/import'
+import { assign, fromCallback, fromPromise, setup } from 'xstate'
 import { detectSourceType } from '@/lib/import'
-import type { ConversionResult, ImportSourceType } from '@/types/import'
+import { validateOpenAPI } from '@/lib/openapi/validator'
+import type { ImportSourceType } from '@/types/import'
 
 /**
  * Import wizard context - all state data.
@@ -15,6 +15,8 @@ export interface ImportWizardContext {
   textContent: string
   /** Generated OpenAPI YAML */
   generatedYaml: string
+  /** Streaming YAML content (partial, during generation) */
+  streamingYaml: string
   /** Validation errors */
   errors: string[]
   /** Whether the generated spec is valid */
@@ -43,6 +45,9 @@ export type ImportWizardEvent =
   | { type: 'SET_TARGET_PATH'; path: string }
   | { type: 'RESET' }
   | { type: 'RETRY' }
+  | { type: 'STREAM_CHUNK'; chunk: string }
+  | { type: 'STREAM_COMPLETE'; yaml: string; processingTimeMs: number }
+  | { type: 'STREAM_ERROR'; error: string }
 
 /**
  * Initial context for the wizard.
@@ -52,9 +57,10 @@ const initialContext: ImportWizardContext = {
   file: null,
   textContent: '',
   generatedYaml: '',
+  streamingYaml: '',
   errors: [],
   isValid: false,
-  model: '',
+  model: 'gpt-4o',
   processingTimeMs: 0,
   errorMessage: null,
   targetPath: '',
@@ -90,37 +96,140 @@ async function readFileAsBase64(file: File): Promise<string> {
 }
 
 /**
- * Process import actor - calls Server Actions for AI conversion.
+ * Clean up YAML output by removing markdown code blocks if present.
  */
-const processImportActor = fromPromise<
-  ConversionResult,
+function cleanYamlOutput(text: string): string {
+  let cleaned = text.trim()
+
+  // Remove markdown code blocks
+  if (cleaned.startsWith('```yaml')) {
+    cleaned = cleaned.slice(7)
+  } else if (cleaned.startsWith('```yml')) {
+    cleaned = cleaned.slice(6)
+  } else if (cleaned.startsWith('```')) {
+    cleaned = cleaned.slice(3)
+  }
+
+  if (cleaned.endsWith('```')) {
+    cleaned = cleaned.slice(0, -3)
+  }
+
+  return cleaned.trim()
+}
+
+/**
+ * Streaming process import actor - calls streaming API routes for AI conversion.
+ * Uses fromCallback to send streaming events back to the machine.
+ *
+ * The API routes use toTextStreamResponse() which returns plain text chunks.
+ */
+const streamingProcessActor = fromCallback<
+  ImportWizardEvent,
   { sourceType: ImportSourceType; file: File | null; textContent: string }
->(async ({ input }) => {
-  // Handle image files - need base64 encoding
-  if (input.sourceType === 'image' && input.file) {
-    const base64Data = await readFileAsBase64(input.file)
-    return processImageImportAction(base64Data, input.file.type, input.file.name)
+>(({ sendBack, input }) => {
+  const controller = new AbortController()
+  const startTime = Date.now()
+  let accumulatedYaml = ''
+
+  const processStream = async () => {
+    try {
+      let endpoint: string
+      let body: string
+
+      // Determine endpoint and prepare body based on source type
+      if (input.sourceType === 'image' && input.file) {
+        const base64Data = await readFileAsBase64(input.file)
+        endpoint = '/api/generate/image'
+        body = JSON.stringify({
+          imageData: base64Data,
+          mimeType: input.file.type,
+        })
+      } else {
+        // Text content - either from file or textarea
+        let content = input.textContent
+        if (input.file) {
+          content = await readFileAsText(input.file)
+        }
+        endpoint = '/api/generate'
+        body = JSON.stringify({
+          sourceType: input.sourceType,
+          content,
+        })
+      }
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body,
+        signal: controller.signal,
+      })
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        throw new Error(errorText || `HTTP ${response.status}`)
+      }
+
+      const reader = response.body?.getReader()
+      if (!reader) {
+        throw new Error('No response body')
+      }
+
+      const decoder = new TextDecoder()
+
+      // Read text stream (plain text chunks from toTextStreamResponse)
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        const chunk = decoder.decode(value, { stream: true })
+        accumulatedYaml += chunk
+        sendBack({ type: 'STREAM_CHUNK', chunk: accumulatedYaml })
+      }
+
+      // Clean and send complete event
+      const cleanedYaml = cleanYamlOutput(accumulatedYaml)
+      sendBack({
+        type: 'STREAM_COMPLETE',
+        yaml: cleanedYaml,
+        processingTimeMs: Date.now() - startTime,
+      })
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        return // Ignore abort errors
+      }
+      sendBack({
+        type: 'STREAM_ERROR',
+        error: error instanceof Error ? error.message : 'Unknown error occurred',
+      })
+    }
   }
 
-  // Handle file uploads - read as text and send to Server Action
-  if (input.file) {
-    const content = await readFileAsText(input.file)
-    return processImportAction(input.sourceType, content, input.file.name)
-  }
+  processStream()
 
-  // Handle text input
-  if (input.textContent) {
-    return processImportAction(input.sourceType, input.textContent)
+  // Cleanup function - abort fetch on cancel
+  return () => {
+    controller.abort()
   }
-
-  throw new Error('No file or text content provided')
 })
+
+/**
+ * Validation actor - validates the generated YAML.
+ */
+const validateActor = fromPromise<{ isValid: boolean; errors: string[] }, { yaml: string }>(
+  async ({ input }) => {
+    const result = await validateOpenAPI(input.yaml)
+    return {
+      isValid: result.isValid,
+      errors: result.errors?.map((e) => e.message) || [],
+    }
+  }
+)
 
 /**
  * Import wizard state machine.
  *
- * Simplified 3-step flow:
- * inputContent → processing → preview → (editing) → saving → complete
+ * Simplified 3-step flow with streaming:
+ * inputContent → processing (streaming) → validating → preview → (editing) → saving → complete
  *                          ↘ error
  */
 export const importWizardMachine = setup({
@@ -129,7 +238,8 @@ export const importWizardMachine = setup({
     events: {} as ImportWizardEvent,
   },
   actors: {
-    processImport: processImportActor,
+    streamingProcess: streamingProcessActor,
+    validate: validateActor,
   },
   guards: {
     hasFile: ({ context }) => context.file !== null,
@@ -168,35 +278,69 @@ export const importWizardMachine = setup({
         PROCESS: {
           target: 'processing',
           guard: 'hasContent',
+          actions: assign({
+            streamingYaml: '', // Reset streaming content
+            generatedYaml: '',
+            errors: [],
+            errorMessage: null,
+          }),
         },
       },
     },
 
     processing: {
       invoke: {
-        id: 'processImport',
-        src: 'processImport',
+        id: 'streamingProcess',
+        src: 'streamingProcess',
         input: ({ context }) => ({
           sourceType: context.sourceType,
           file: context.file,
           textContent: context.textContent,
         }),
+      },
+      on: {
+        STREAM_CHUNK: {
+          actions: assign({
+            streamingYaml: ({ event }) => event.chunk,
+          }),
+        },
+        STREAM_COMPLETE: {
+          target: 'validating',
+          actions: assign({
+            generatedYaml: ({ event }) => event.yaml,
+            streamingYaml: ({ event }) => event.yaml,
+            processingTimeMs: ({ event }) => event.processingTimeMs,
+          }),
+        },
+        STREAM_ERROR: {
+          target: 'error',
+          actions: assign({
+            errorMessage: ({ event }) => event.error,
+          }),
+        },
+      },
+    },
+
+    validating: {
+      invoke: {
+        id: 'validate',
+        src: 'validate',
+        input: ({ context }) => ({ yaml: context.generatedYaml }),
         onDone: {
           target: 'preview',
           actions: assign({
-            generatedYaml: ({ event }) => event.output.yaml,
             isValid: ({ event }) => event.output.isValid,
-            errors: ({ event }) => event.output.errors || [],
-            model: ({ event }) => event.output.model,
-            processingTimeMs: ({ event }) => event.output.processingTimeMs,
+            errors: ({ event }) => event.output.errors,
             errorMessage: null,
           }),
         },
         onError: {
-          target: 'error',
+          target: 'preview',
           actions: assign({
-            errorMessage: ({ event }) =>
-              event.error instanceof Error ? event.error.message : 'Unknown error occurred',
+            isValid: false,
+            errors: ({ event }) => [
+              event.error instanceof Error ? event.error.message : 'Validation failed',
+            ],
           }),
         },
       },
@@ -223,12 +367,18 @@ export const importWizardMachine = setup({
           target: 'inputContent',
           actions: assign({
             generatedYaml: '',
+            streamingYaml: '',
             isValid: false,
             errors: [],
           }),
         },
         RETRY: {
           target: 'processing',
+          actions: assign({
+            streamingYaml: '',
+            generatedYaml: '',
+            errors: [],
+          }),
         },
       },
     },
@@ -269,11 +419,17 @@ export const importWizardMachine = setup({
       on: {
         RETRY: {
           target: 'processing',
+          actions: assign({
+            streamingYaml: '',
+            generatedYaml: '',
+            errors: [],
+          }),
         },
         BACK: {
           target: 'inputContent',
           actions: assign({
             errorMessage: null,
+            streamingYaml: '',
           }),
         },
         RESET: {
@@ -301,6 +457,7 @@ export const importWizardMachine = setup({
 export type ImportWizardState =
   | 'inputContent'
   | 'processing'
+  | 'validating'
   | 'preview'
   | 'editing'
   | 'saving'
@@ -315,7 +472,9 @@ export function getStepName(state: ImportWizardState): string {
     case 'inputContent':
       return 'Input'
     case 'processing':
-      return 'Processing'
+      return 'Generating'
+    case 'validating':
+      return 'Validating'
     case 'preview':
       return 'Preview'
     case 'editing':
@@ -335,7 +494,13 @@ export function getStepName(state: ImportWizardState): string {
  * Get step number (1-indexed).
  */
 export function getStepNumber(state: ImportWizardState): number {
-  const steps: ImportWizardState[] = ['inputContent', 'processing', 'preview', 'saving']
+  const steps: ImportWizardState[] = [
+    'inputContent',
+    'processing',
+    'validating',
+    'preview',
+    'saving',
+  ]
   const index = steps.indexOf(state)
   return index === -1 ? 0 : index + 1
 }

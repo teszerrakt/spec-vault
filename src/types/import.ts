@@ -57,3 +57,15 @@ export interface ConversionResult {
   /** Processing time in milliseconds */
   processingTimeMs: number
 }
+
+/**
+ * Streaming generation state.
+ */
+export interface StreamingState {
+  /** Whether streaming is in progress */
+  isStreaming: boolean
+  /** Accumulated content so far */
+  content: string
+  /** Error if streaming failed */
+  error?: string
+}

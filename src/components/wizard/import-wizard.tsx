@@ -26,8 +26,8 @@ export function ImportWizard() {
   const [saveDialogOpen, setSaveDialogOpen] = useState(false)
   const processingStartTimeRef = useRef<number | null>(null)
 
-  // Track elapsed time during processing
-  const isProcessing = state.matches('processing')
+  // Track elapsed time during processing and validating
+  const isProcessing = state.matches('processing') || state.matches('validating')
 
   useEffect(() => {
     if (!isProcessing) {
@@ -36,7 +36,9 @@ export function ImportWizard() {
     }
 
     // Set start time when processing begins
-    processingStartTimeRef.current = Date.now()
+    if (processingStartTimeRef.current === null) {
+      processingStartTimeRef.current = Date.now()
+    }
 
     const interval = setInterval(() => {
       if (processingStartTimeRef.current !== null) {
@@ -54,7 +56,7 @@ export function ImportWizard() {
     const prevState = prevStateRef.current
 
     // Transition to preview = success
-    if (currentState === 'preview' && prevState === 'processing') {
+    if (currentState === 'preview' && (prevState === 'processing' || prevState === 'validating')) {
       toast.success('OpenAPI spec generated', {
         description: state.context.isValid
           ? 'Your specification is valid and ready to save'
@@ -63,7 +65,7 @@ export function ImportWizard() {
     }
 
     // Transition to error = failure
-    if (currentState === 'error' && prevState === 'processing') {
+    if (currentState === 'error' && (prevState === 'processing' || prevState === 'validating')) {
       toast.error('Conversion failed', {
         description: state.context.errorMessage || 'Unable to process your input',
       })
@@ -137,6 +139,14 @@ export function ImportWizard() {
 
   const canGoBack = state.matches('preview') || state.matches('editing') || state.matches('error')
 
+  // Determine processing stage for indicator
+  const getProcessingStage = (): 'parsing' | 'analyzing' | 'generating' | 'validating' => {
+    if (state.matches('validating')) return 'validating'
+    if (state.context.streamingYaml.length > 0) return 'generating'
+    if (elapsedTime < 2000) return 'parsing'
+    return 'analyzing'
+  }
+
   return (
     <>
       {/* Save Dialog */}
@@ -182,13 +192,21 @@ export function ImportWizard() {
                 />
               )}
 
-              {/* Processing */}
+              {/* Processing (with streaming preview) */}
               {state.matches('processing') && (
                 <ProcessingIndicator
-                  stage={
-                    elapsedTime < 2000 ? 'parsing' : elapsedTime < 5000 ? 'analyzing' : 'generating'
-                  }
+                  stage={getProcessingStage()}
                   elapsedMs={elapsedTime}
+                  streamingYaml={state.context.streamingYaml}
+                />
+              )}
+
+              {/* Validating */}
+              {state.matches('validating') && (
+                <ProcessingIndicator
+                  stage="validating"
+                  elapsedMs={elapsedTime}
+                  streamingYaml={state.context.streamingYaml}
                 />
               )}
 
@@ -237,6 +255,7 @@ export function ImportWizard() {
 
           {/* Navigation buttons */}
           {!state.matches('processing') &&
+            !state.matches('validating') &&
             !state.matches('saving') &&
             !state.matches('error') &&
             !state.matches('inputContent') && (
