@@ -5,7 +5,7 @@ import { ArrowLeft } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
-import type { SaveResult } from '@/actions/contracts'
+import { getContractFolders, type SaveResult } from '@/actions/contracts'
 import { SaveDialog } from '@/components/contracts'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -24,7 +24,15 @@ export function ImportWizard() {
   const [state, send] = useMachine(importWizardMachine)
   const [elapsedTime, setElapsedTime] = useState(0)
   const [saveDialogOpen, setSaveDialogOpen] = useState(false)
+  const [folders, setFolders] = useState<string[]>(['/'])
   const processingStartTimeRef = useRef<number | null>(null)
+
+  // Fetch available folders on mount
+  useEffect(() => {
+    getContractFolders()
+      .then(setFolders)
+      .catch(() => setFolders(['/']))
+  }, [])
 
   // Track elapsed time during processing and validating
   const isProcessing = state.matches('processing') || state.matches('validating')
@@ -153,10 +161,11 @@ export function ImportWizard() {
       <SaveDialog
         open={saveDialogOpen}
         onOpenChange={setSaveDialogOpen}
-        filePath={state.context.targetPath}
         content={state.context.generatedYaml}
         onSaveSuccess={handleSaveSuccess}
         isNew={true}
+        folders={folders}
+        suggestedFileName={state.context.suggestedFileName}
       />
 
       <div className="w-full flex justify-center">

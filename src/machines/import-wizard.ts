@@ -1,6 +1,7 @@
 import { assign, fromCallback, fromPromise, setup } from 'xstate'
 import { cleanYamlOutput } from '@/lib/ai/converter'
 import { detectSourceType } from '@/lib/import'
+import { extractFileNameFromSpec } from '@/lib/openapi/parser'
 import { validateOpenAPI } from '@/lib/openapi/validator'
 import type { ImportSourceType } from '@/types/import'
 
@@ -30,6 +31,8 @@ export interface ImportWizardContext {
   errorMessage: string | null
   /** Target file path for saving */
   targetPath: string
+  /** Suggested file name extracted from info.title (without extension) */
+  suggestedFileName: string
 }
 
 /**
@@ -65,6 +68,7 @@ const initialContext: ImportWizardContext = {
   processingTimeMs: 0,
   errorMessage: null,
   targetPath: '',
+  suggestedFileName: '',
 }
 
 /**
@@ -192,17 +196,20 @@ const streamingProcessActor = fromCallback<
 })
 
 /**
- * Validation actor - validates the generated YAML.
+ * Validation actor - validates the generated YAML and extracts suggested filename.
  */
-const validateActor = fromPromise<{ isValid: boolean; errors: string[] }, { yaml: string }>(
-  async ({ input }) => {
-    const result = await validateOpenAPI(input.yaml)
-    return {
-      isValid: result.isValid,
-      errors: result.errors?.map((e) => e.message) || [],
-    }
+const validateActor = fromPromise<
+  { isValid: boolean; errors: string[]; suggestedFileName: string },
+  { yaml: string }
+>(async ({ input }) => {
+  const result = await validateOpenAPI(input.yaml)
+  const suggestedFileName = extractFileNameFromSpec(input.yaml)
+  return {
+    isValid: result.isValid,
+    errors: result.errors?.map((e) => e.message) || [],
+    suggestedFileName,
   }
-)
+})
 
 /**
  * Import wizard state machine.
@@ -310,6 +317,7 @@ export const importWizardMachine = setup({
           actions: assign({
             isValid: ({ event }) => event.output.isValid,
             errors: ({ event }) => event.output.errors,
+            suggestedFileName: ({ event }) => event.output.suggestedFileName,
             errorMessage: null,
           }),
         },
