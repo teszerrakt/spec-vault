@@ -34,8 +34,9 @@ export function ImportWizard() {
       .catch(() => setFolders(['/']))
   }, [])
 
-  // Track elapsed time during processing and validating
-  const isProcessing = state.matches('processing') || state.matches('validating')
+  // Track elapsed time during processing, validating, and refining
+  const isProcessing =
+    state.matches('processing') || state.matches('validating') || state.matches('refining')
 
   useEffect(() => {
     if (!isProcessing) {
@@ -64,12 +65,24 @@ export function ImportWizard() {
     const prevState = prevStateRef.current
 
     // Transition to preview = success
-    if (currentState === 'preview' && (prevState === 'processing' || prevState === 'validating')) {
-      toast.success('OpenAPI spec generated', {
-        description: state.context.isValid
-          ? 'Your specification is valid and ready to save'
-          : 'Generated with validation warnings - please review',
-      })
+    if (
+      currentState === 'preview' &&
+      (prevState === 'processing' || prevState === 'validating' || prevState === 'refining')
+    ) {
+      if (prevState === 'refining' || prevState === 'validating') {
+        // After refining, show different message based on result
+        toast.success(state.context.isValid ? 'Spec fixed successfully' : 'Refinement complete', {
+          description: state.context.isValid
+            ? 'Your specification is now valid and ready to save'
+            : 'Some issues remain - you can try again or edit manually',
+        })
+      } else {
+        toast.success('OpenAPI spec generated', {
+          description: state.context.isValid
+            ? 'Your specification is valid and ready to save'
+            : 'Generated with validation warnings - please review',
+        })
+      }
     }
 
     // Transition to error = failure
@@ -133,6 +146,15 @@ export function ImportWizard() {
   const handleRetry = useCallback(() => {
     send({ type: 'RETRY' })
   }, [send])
+
+  const handleRefine = useCallback(() => {
+    if (state.context.refineAttempts >= 3) {
+      toast.warning('Multiple refinement attempts', {
+        description: 'Consider editing the spec manually if issues persist.',
+      })
+    }
+    send({ type: 'REFINE' })
+  }, [send, state.context.refineAttempts])
 
   // Get current state info
   const currentState = state.value as string
@@ -219,6 +241,15 @@ export function ImportWizard() {
                 />
               )}
 
+              {/* Refining */}
+              {state.matches('refining') && (
+                <ProcessingIndicator
+                  stage="generating"
+                  elapsedMs={elapsedTime}
+                  streamingYaml={state.context.streamingYaml}
+                />
+              )}
+
               {/* Preview / Editing */}
               {(state.matches('preview') || state.matches('editing')) && (
                 <SpecPreview
@@ -229,6 +260,8 @@ export function ImportWizard() {
                   processingTimeMs={state.context.processingTimeMs}
                   onEdit={handleEditSpec}
                   onSave={handleSave}
+                  onRefine={handleRefine}
+                  isRefining={state.matches('refining')}
                   disabled={saveDialogOpen}
                 />
               )}
@@ -265,6 +298,7 @@ export function ImportWizard() {
           {/* Navigation buttons */}
           {!state.matches('processing') &&
             !state.matches('validating') &&
+            !state.matches('refining') &&
             !state.matches('saving') &&
             !state.matches('error') &&
             !state.matches('inputContent') && (
