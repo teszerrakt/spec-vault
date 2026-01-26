@@ -101,3 +101,40 @@ export function parseOpenAPI(content: string): OpenAPIObject {
 export function serializeOpenAPI(spec: OpenAPIObject): string {
   return serializeYaml(spec)
 }
+
+/**
+ * Convert an API title to a valid file name (kebab-case, no extension).
+ * @param title - The API title from info.title
+ * @returns A sanitized file name suitable for use in file paths
+ * @example
+ * titleToFileName("Pet Store API") // => "pet-store-api"
+ * titleToFileName("Users & Orders API v2.0") // => "users-orders-api-v2-0"
+ * titleToFileName("") // => "untitled-api"
+ */
+export function titleToFileName(title: string): string {
+  if (!title.trim()) return 'untitled-api'
+
+  return (
+    title
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '') // Remove special chars except spaces/hyphens
+      .replace(/\s+/g, '-') // Spaces to hyphens
+      .replace(/-+/g, '-') // Collapse multiple hyphens
+      .replace(/^-|-$/g, '') // Trim leading/trailing hyphens
+      .slice(0, 50) || 'untitled-api' // Limit length, fallback if empty
+  )
+}
+
+/**
+ * Extract a suggested file name from OpenAPI YAML content's info.title.
+ * @param yamlContent - Raw YAML content of an OpenAPI spec
+ * @returns A sanitized file name derived from the spec's title
+ */
+export function extractFileNameFromSpec(yamlContent: string): string {
+  try {
+    const spec = parseYaml(yamlContent)
+    return titleToFileName(spec.info?.title || '')
+  } catch {
+    return 'untitled-api'
+  }
+}

@@ -241,3 +241,47 @@ export async function generateChangelogAction(
   // Generate the changelog
   return generateChangelogFromSpecs(fromYaml, toYaml, contractPath, fromCommitSha, toCommitSha)
 }
+
+/**
+ * Get all unique folder paths from existing contracts.
+ * Returns paths relative to contracts directory, sorted alphabetically.
+ * @returns Array of folder paths, always includes "/" for root
+ * @example ["/", "flight/", "flight/demand/", "flight/supply/", "payments/"]
+ */
+export async function getContractFolders(): Promise<string[]> {
+  const session = await auth()
+
+  if (!session?.accessToken) {
+    return ['/']
+  }
+
+  try {
+    const repo = await createConfiguredRepository(session.accessToken)
+    const contracts = await repo.listContracts({ includeValidation: false })
+
+    // Extract unique folder paths
+    const folders = new Set<string>(['/']) // Always include root
+
+    for (const contract of contracts) {
+      const parts = contract.filePath.split('/')
+      // Remove filename, keep folder path
+      if (parts.length > 1) {
+        let path = ''
+        for (let i = 0; i < parts.length - 1; i++) {
+          path += `${parts[i]}/`
+          folders.add(path)
+        }
+      }
+    }
+
+    return Array.from(folders).sort((a, b) => {
+      // Keep "/" at the top, then sort alphabetically
+      if (a === '/') return -1
+      if (b === '/') return 1
+      return a.localeCompare(b)
+    })
+  } catch (error) {
+    console.error('Failed to get contract folders:', error)
+    return ['/']
+  }
+}
