@@ -1,0 +1,107 @@
+openapi: 3.1.0
+info:
+  title: Anime Character and Voice Actor API
+  version: 1.0.0
+  summary: API for retrieving anime character details and their associated voice actors.
+servers:
+  - url: https://api.animecharacters.com/v1
+paths:
+  /characters/{characterId}:
+    get:
+      operationId: getCharacterDetails
+      summary: Retrieve character details
+      description: Get detailed information about an anime character, including images and voice actors.
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          description: The ID of the character to retrieve.
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: Successful response with character details.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterResponse'
+        '400':
+          description: Bad request due to invalid character ID.
+        '404':
+          description: Character not found.
+        '500':
+          description: Internal server error.
+components:
+  schemas:
+    CharacterResponse:
+      type: object
+      properties:
+        character:
+          $ref: '#/components/schemas/Character'
+        role:
+          type: string
+          example: "Main"
+        voice_actors:
+          type: array
+          items:
+            $ref: '#/components/schemas/VoiceActor'
+    Character:
+      type: object
+      properties:
+        mal_id:
+          type: integer
+          example: 123
+        url:
+          type: string
+          format: uri
+          example: "https://myanimelist.net/character/123"
+        images:
+          $ref: '#/components/schemas/CharacterImages'
+        name:
+          type: string
+          example: "Naruto Uzumaki"
+    CharacterImages:
+      type: object
+      properties:
+        jpg:
+          $ref: '#/components/schemas/ImageUrls'
+        webp:
+          $ref: '#/components/schemas/ImageUrls'
+    ImageUrls:
+      type: object
+      properties:
+        image_url:
+          type: string
+          format: uri
+          example: "https://cdn.myanimelist.net/images/characters/1.jpg"
+        small_image_url:
+          type: string
+          format: uri
+          example: "https://cdn.myanimelist.net/images/characters/1_small.jpg"
+    VoiceActor:
+      type: object
+      properties:
+        person:
+          $ref: '#/components/schemas/Person'
+        language:
+          type: string
+          example: "Japanese"
+    Person:
+      type: object
+      properties:
+        mal_id:
+          type: integer
+          example: 456
+        url:
+          type: string
+          format: uri
+          example: "https://myanimelist.net/people/456"
+        images:
+          type: object
+          properties:
+            jpg:
+              type: object
+        name:
+          type: string
+          example: "Junko Takeuchi"
