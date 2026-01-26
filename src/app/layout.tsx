@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import { SessionProvider } from 'next-auth/react'
+import { Analytics } from '@vercel/analytics/next'
 import { Toaster } from '@/components/ui/sonner'
 import './globals.css'
 
@@ -26,6 +27,7 @@ export default function RootLayout({
           {children}
           <Toaster position="bottom-right" />
         </SessionProvider>
+        <Analytics />
       </body>
     </html>
   )
