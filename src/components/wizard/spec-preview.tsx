@@ -1,6 +1,6 @@
 'use client'
 
-import { AlertCircle, Check, CheckCircle, Copy, Download, Edit, Save } from 'lucide-react'
+import { AlertCircle, Check, CheckCircle, Copy, Download, Edit, Save, Wand2 } from 'lucide-react'
 import { useCallback, useState } from 'react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -23,6 +23,10 @@ interface SpecPreviewProps {
   onEdit?: (yaml: string) => void
   /** Callback when save is triggered */
   onSave?: () => void
+  /** Callback when refinement is triggered */
+  onRefine?: () => void
+  /** Whether refinement is in progress */
+  isRefining?: boolean
   /** Whether actions are disabled */
   disabled?: boolean
 }
@@ -35,6 +39,8 @@ export function SpecPreview({
   processingTimeMs,
   onEdit,
   onSave,
+  onRefine,
+  isRefining = false,
   disabled = false,
 }: SpecPreviewProps) {
   const [copied, setCopied] = useState(false)
@@ -100,6 +106,18 @@ export function SpecPreview({
               ))}
               {errors.length > 5 && <li className="text-sm">... and {errors.length - 5} more</li>}
             </ul>
+            {onRefine && (
+              <Button
+                onClick={onRefine}
+                disabled={disabled || isRefining}
+                variant="outline"
+                size="sm"
+                className="mt-3"
+              >
+                <Wand2 className="mr-2 h-4 w-4" />
+                {isRefining ? 'Fixing...' : 'Fix with AI'}
+              </Button>
+            )}
           </AlertDescription>
         </Alert>
       )}

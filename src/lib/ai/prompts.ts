@@ -91,6 +91,23 @@ Apply the requested changes while maintaining spec validity. Output only the upd
 }
 
 /**
+ * Prompt for automatically fixing validation errors in an OpenAPI spec.
+ */
+export function getErrorRefinementPrompt(currentSpec: string, errors: string[]): string {
+  const errorList = errors.map((e, i) => `${i + 1}. ${e}`).join('\n')
+  return `Fix the following validation errors in this OpenAPI 3.1 specification.
+
+Validation Errors:
+${errorList}
+
+Current Specification:
+${currentSpec}
+
+Fix ONLY the validation errors listed above. Preserve all other content unchanged.
+Output only the corrected YAML, no explanations.`
+}
+
+/**
  * Prompt for extracting text from an image for further processing.
  */
 export function getImageExtractionPrompt(): string {

@@ -33,6 +33,8 @@ export interface ImportWizardContext {
   targetPath: string
   /** Suggested file name extracted from info.title (without extension) */
   suggestedFileName: string
+  /** Number of AI refinement attempts */
+  refineAttempts: number
 }
 
 /**
@@ -52,6 +54,10 @@ export type ImportWizardEvent =
   | { type: 'STREAM_CHUNK'; chunk: string }
   | { type: 'STREAM_COMPLETE'; yaml: string; processingTimeMs: number }
   | { type: 'STREAM_ERROR'; error: string }
+  | { type: 'REFINE' }
+  | { type: 'REFINE_CHUNK'; chunk: string }
+  | { type: 'REFINE_COMPLETE'; yaml: string }
+  | { type: 'REFINE_ERROR'; error: string }
 
 /**
  * Initial context for the wizard.
@@ -69,6 +75,7 @@ const initialContext: ImportWizardContext = {
   errorMessage: null,
   targetPath: '',
   suggestedFileName: '',
+  refineAttempts: 0,
 }
 
 /**
@@ -196,6 +203,70 @@ const streamingProcessActor = fromCallback<
 })
 
 /**
+ * Streaming refine actor - calls streaming API route to fix validation errors.
+ * Uses fromCallback to send streaming events back to the machine.
+ */
+const streamingRefineActor = fromCallback<
+  ImportWizardEvent,
+  { currentSpec: string; errors: string[] }
+>(({ sendBack, input }) => {
+  const controller = new AbortController()
+  let accumulatedYaml = ''
+
+  const processStream = async () => {
+    try {
+      const response = await fetch('/api/generate/refine', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          currentSpec: input.currentSpec,
+          errors: input.errors,
+        }),
+        signal: controller.signal,
+      })
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        throw new Error(errorText || `HTTP ${response.status}`)
+      }
+
+      const reader = response.body?.getReader()
+      if (!reader) {
+        throw new Error('No response body')
+      }
+
+      const decoder = new TextDecoder()
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        const chunk = decoder.decode(value, { stream: true })
+        accumulatedYaml += chunk
+        sendBack({ type: 'REFINE_CHUNK', chunk: accumulatedYaml })
+      }
+
+      const cleanedYaml = cleanYamlOutput(accumulatedYaml)
+      sendBack({ type: 'REFINE_COMPLETE', yaml: cleanedYaml })
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        return
+      }
+      sendBack({
+        type: 'REFINE_ERROR',
+        error: error instanceof Error ? error.message : 'Unknown error occurred',
+      })
+    }
+  }
+
+  processStream()
+
+  return () => {
+    controller.abort()
+  }
+})
+
+/**
  * Validation actor - validates the generated YAML and extracts suggested filename.
  */
 const validateActor = fromPromise<
@@ -225,6 +296,7 @@ export const importWizardMachine = setup({
   },
   actors: {
     streamingProcess: streamingProcessActor,
+    streamingRefine: streamingRefineActor,
     validate: validateActor,
   },
   guards: {
@@ -233,6 +305,7 @@ export const importWizardMachine = setup({
     hasContent: ({ context }) => context.file !== null || context.textContent.trim().length > 0,
     isValid: ({ context }) => context.isValid,
     hasTargetPath: ({ context }) => context.targetPath.trim().length > 0,
+    canRefine: ({ context }) => !context.isValid && context.errors.length > 0,
   },
 }).createMachine({
   id: 'importWizard',
@@ -367,6 +440,15 @@ export const importWizardMachine = setup({
             errors: [],
           }),
         },
+        REFINE: {
+          target: 'refining',
+          guard: 'canRefine',
+          actions: assign({
+            refineAttempts: ({ context }) => context.refineAttempts + 1,
+            streamingYaml: '',
+            errorMessage: null,
+          }),
+        },
       },
     },
 
@@ -388,6 +470,46 @@ export const importWizardMachine = setup({
         SAVE: {
           target: 'saving',
           guard: 'hasTargetPath',
+        },
+        REFINE: {
+          target: 'refining',
+          guard: 'canRefine',
+          actions: assign({
+            refineAttempts: ({ context }) => context.refineAttempts + 1,
+            streamingYaml: '',
+            errorMessage: null,
+          }),
+        },
+      },
+    },
+
+    refining: {
+      invoke: {
+        id: 'streamingRefine',
+        src: 'streamingRefine',
+        input: ({ context }) => ({
+          currentSpec: context.generatedYaml,
+          errors: context.errors,
+        }),
+      },
+      on: {
+        REFINE_CHUNK: {
+          actions: assign({
+            streamingYaml: ({ event }) => event.chunk,
+          }),
+        },
+        REFINE_COMPLETE: {
+          target: 'validating',
+          actions: assign({
+            generatedYaml: ({ event }) => event.yaml,
+            streamingYaml: ({ event }) => event.yaml,
+          }),
+        },
+        REFINE_ERROR: {
+          target: 'preview',
+          actions: assign({
+            errorMessage: ({ event }) => event.error,
+          }),
         },
       },
     },
@@ -447,6 +569,7 @@ export type ImportWizardState =
   | 'validating'
   | 'preview'
   | 'editing'
+  | 'refining'
   | 'saving'
   | 'error'
   | 'complete'
@@ -461,6 +584,8 @@ export function getStepName(state: ImportWizardState): string {
     case 'processing':
     case 'validating':
       return 'Processing'
+    case 'refining':
+      return 'Refining'
     case 'preview':
       return 'Preview'
     case 'editing':
@@ -478,7 +603,7 @@ export function getStepName(state: ImportWizardState): string {
 
 /**
  * Get step number (1-indexed).
- * Note: 'validating' is part of step 2 (Processing) from user's perspective.
+ * Note: 'validating' and 'refining' are part of step 2 (Processing) from user's perspective.
  */
 export function getStepNumber(state: ImportWizardState): number {
   switch (state) {
@@ -486,6 +611,7 @@ export function getStepNumber(state: ImportWizardState): number {
       return 1
     case 'processing':
     case 'validating': // Part of processing step
+    case 'refining': // Part of processing step
       return 2
     case 'preview':
     case 'editing':
