@@ -1,0 +1,115 @@
+openapi: 3.1.0
+info:
+  title: Flight Search Redirection API
+  version: 1.0.0
+  summary: API for redirecting flight search results with detailed inventory and pricing information.
+  contact:
+    name: Flight Demand Team
+servers:
+  - url: https://www.traveloka.com/api/v2
+    description: Production Server
+paths:
+  /flight/search/redirection:
+    post:
+      operationId: searchFlightRedirection
+      summary: Redirect flight search results
+      description: Redirects flight search results with inventory and pricing details.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                searchId:
+                  type: string
+                  description: Unique identifier for the search.
+                  example: "12345"
+                journeyIds:
+                  type: array
+                  items:
+                    type: string
+                  description: List of journey identifiers.
+                  example:
+                    - journeyId1
+                    - journeyId2
+                isBreakSmartCombo:
+                  type: boolean
+                  description: Set true if user breaks their smart combo on return page.
+                  example: false
+                journeyContextData:
+                  type: object
+                  additionalProperties:
+                    $ref: "#/components/schemas/JourneyContextData"
+                  description: Context data for each journey.
+                  example:
+                    journeyId1:
+                      isBaggageFilterEnabled: true
+                    journeyId2:
+                      isBaggageFilterEnabled: false
+                isPrefetch:
+                  type: boolean
+                  description: Indicates if the request is from prefetch.
+                  example: true
+      responses:
+        "200":
+          description: Successful response with inventory and pricing details.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  inventories:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Inventories"
+                  totalPrice:
+                    $ref: "#/components/schemas/CurrencyValueDisplay"
+                  displayedPricePerPax:
+                    $ref: "#/components/schemas/CurrencyValueDisplay"
+        "400":
+          description: Bad request due to invalid input.
+        "401":
+          description: Unauthorized access.
+        "404":
+          description: Resource not found.
+        "500":
+          description: Internal server error.
+components:
+  schemas:
+    Inventories:
+      type: object
+      properties:
+        isPackage:
+          type: boolean
+          description: Indicates whether the inventory selected is packaged or not.
+          example: false
+        flightIds:
+          type: array
+          items:
+            type: string
+          description: List of flight identifiers.
+          example:
+            - flightId1
+            - flightId2
+        displayedPrice:
+          $ref: "#/components/schemas/CurrencyValueDisplay"
+    JourneyContextData:
+      type: object
+      properties:
+        isBaggageFilterEnabled:
+          type: boolean
+          description: Indicates whether the journeyId was selected with baggage filter on or off.
+          example: true
+    CurrencyValueDisplay:
+      type: object
+      properties:
+        amount:
+          type: number
+          format: float
+          description: The amount of currency.
+          example: 100
+        currency:
+          type: string
+          description: The currency code.
+          example: USD
