@@ -2,6 +2,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { auth, signOut } from '@/auth'
+import { ImportCleanupProvider } from '@/components/import-cleanup-provider'
 import { MobileBlock } from '@/components/mobile-block'
 import { Button } from '@/components/ui/button'
 
@@ -73,7 +74,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
         </header>
 
         {/* Main Content */}
-        <main className="w-full px-4 sm:px-6 lg:px-8 py-6">{children}</main>
+        <main className="w-full px-4 sm:px-6 lg:px-8 py-6">
+          <ImportCleanupProvider>{children}</ImportCleanupProvider>
+        </main>
       </div>
     </>
   )
