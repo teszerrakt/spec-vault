@@ -29,8 +29,6 @@ export interface ImportWizardContext {
   processingTimeMs: number
   /** Error message if failed */
   errorMessage: string | null
-  /** Target file path for saving */
-  targetPath: string
   /** Suggested file name extracted from info.title (without extension) */
   suggestedFileName: string
   /** Number of AI refinement attempts */
@@ -46,9 +44,6 @@ export type ImportWizardEvent =
   | { type: 'CLEAR_FILE' }
   | { type: 'PROCESS' }
   | { type: 'BACK' }
-  | { type: 'EDIT_SPEC'; yaml: string }
-  | { type: 'SAVE' }
-  | { type: 'SET_TARGET_PATH'; path: string }
   | { type: 'RESET' }
   | { type: 'RETRY' }
   | { type: 'STREAM_CHUNK'; chunk: string }
@@ -73,7 +68,6 @@ const initialContext: ImportWizardContext = {
   model: 'gpt-4o',
   processingTimeMs: 0,
   errorMessage: null,
-  targetPath: '',
   suggestedFileName: '',
   refineAttempts: 0,
 }
@@ -285,9 +279,12 @@ const validateActor = fromPromise<
 /**
  * Import wizard state machine.
  *
- * Simplified 3-step flow with streaming:
- * inputContent → processing (streaming) → validating → preview → (editing) → saving → complete
+ * Simplified flow with streaming:
+ * inputContent → processing (streaming) → validating → preview → (refining) → [Open in Editor]
  *                          ↘ error
+ *
+ * After preview, user clicks "Open in Editor" which navigates to /edit/new
+ * where the full EditorWizard takes over for section-by-section editing and saving.
  */
 export const importWizardMachine = setup({
   types: {
@@ -304,7 +301,6 @@ export const importWizardMachine = setup({
     hasTextContent: ({ context }) => context.textContent.trim().length > 0,
     hasContent: ({ context }) => context.file !== null || context.textContent.trim().length > 0,
     isValid: ({ context }) => context.isValid,
-    hasTargetPath: ({ context }) => context.targetPath.trim().length > 0,
     canRefine: ({ context }) => !context.isValid && context.errors.length > 0,
   },
 }).createMachine({
@@ -408,21 +404,6 @@ export const importWizardMachine = setup({
 
     preview: {
       on: {
-        EDIT_SPEC: {
-          target: 'editing',
-          actions: assign({
-            generatedYaml: ({ event }) => event.yaml,
-          }),
-        },
-        SET_TARGET_PATH: {
-          actions: assign({
-            targetPath: ({ event }) => event.path,
-          }),
-        },
-        SAVE: {
-          target: 'saving',
-          guard: 'hasTargetPath',
-        },
         BACK: {
           target: 'inputContent',
           actions: assign({
@@ -439,37 +420,6 @@ export const importWizardMachine = setup({
             generatedYaml: '',
             errors: [],
           }),
-        },
-        REFINE: {
-          target: 'refining',
-          guard: 'canRefine',
-          actions: assign({
-            refineAttempts: ({ context }) => context.refineAttempts + 1,
-            streamingYaml: '',
-            errorMessage: null,
-          }),
-        },
-      },
-    },
-
-    editing: {
-      on: {
-        EDIT_SPEC: {
-          actions: assign({
-            generatedYaml: ({ event }) => event.yaml,
-          }),
-        },
-        BACK: {
-          target: 'preview',
-        },
-        SET_TARGET_PATH: {
-          actions: assign({
-            targetPath: ({ event }) => event.path,
-          }),
-        },
-        SAVE: {
-          target: 'saving',
-          guard: 'hasTargetPath',
         },
         REFINE: {
           target: 'refining',
@@ -514,16 +464,6 @@ export const importWizardMachine = setup({
       },
     },
 
-    saving: {
-      // Saving is handled by the parent component via Server Action
-      // This state exists to show saving indicator
-      on: {
-        // SaveContract action is handled externally
-        // On success, redirect to contract page
-        // On error, return to preview with error message
-      },
-    },
-
     error: {
       on: {
         RETRY: {
@@ -547,10 +487,6 @@ export const importWizardMachine = setup({
         },
       },
     },
-
-    complete: {
-      type: 'final',
-    },
   },
   on: {
     RESET: {
@@ -568,11 +504,8 @@ export type ImportWizardState =
   | 'processing'
   | 'validating'
   | 'preview'
-  | 'editing'
   | 'refining'
-  | 'saving'
   | 'error'
-  | 'complete'
 
 /**
  * Get human-readable step name.
@@ -588,14 +521,8 @@ export function getStepName(state: ImportWizardState): string {
       return 'Refining'
     case 'preview':
       return 'Preview'
-    case 'editing':
-      return 'Edit Spec'
-    case 'saving':
-      return 'Saving'
     case 'error':
       return 'Error'
-    case 'complete':
-      return 'Complete'
     default:
       return 'Unknown'
   }
@@ -610,12 +537,10 @@ export function getStepNumber(state: ImportWizardState): number {
     case 'inputContent':
       return 1
     case 'processing':
-    case 'validating': // Part of processing step
-    case 'refining': // Part of processing step
+    case 'validating':
+    case 'refining':
       return 2
     case 'preview':
-    case 'editing':
-    case 'saving':
       return 3
     default:
       return 0
@@ -626,5 +551,5 @@ export function getStepNumber(state: ImportWizardState): number {
  * Get total number of steps.
  */
 export function getTotalSteps(): number {
-  return 3 // Input → Processing → Preview/Save
+  return 3 // Input → Processing → Preview
 }

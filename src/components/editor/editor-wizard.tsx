@@ -5,12 +5,13 @@ import { Check, Database, Eye, FileCode2, Route, Server, Shield } from 'lucide-r
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
-import type { SaveResult } from '@/actions/contracts'
+import { getContractFolders, type SaveResult } from '@/actions/contracts'
 import { SaveDialog } from '@/components/contracts/save-dialog'
 import { Button } from '@/components/ui/button'
 import { Kbd } from '@/components/ui/kbd'
 import { Tabs, TabsContent } from '@/components/ui/tabs'
 import { getMetaKeyDisplay, useKeyboardShortcut } from '@/hooks/use-keyboard-shortcut'
+import { deleteImportedSpec } from '@/lib/import-db'
 import { parseOpenAPI, serializeOpenAPI } from '@/lib/openapi/parser'
 import {
   type EditorSection,
@@ -37,6 +38,10 @@ interface EditorWizardProps {
   initialYaml?: string
   /** Whether this is a new spec (from import wizard) */
   isNew?: boolean
+  /** Suggested filename for new specs (from AI generation) */
+  suggestedFileName?: string
+  /** Token for imported spec (to delete from IndexedDB after save) */
+  importToken?: string
 }
 
 const SECTION_ICONS: Record<EditorSection, React.ElementType> = {
@@ -53,12 +58,24 @@ export function EditorWizard({
   initialSpec,
   initialYaml,
   isNew = false,
+  suggestedFileName,
+  importToken,
 }: EditorWizardProps) {
   const router = useRouter()
   const [state, send] = useMachine(editorWizardMachine)
   const [saveDialogOpen, setSaveDialogOpen] = useState(false)
+  const [folders, setFolders] = useState<string[]>(['/'])
 
   const { spec, yaml, currentSection, isValid, validationErrors, isDirty } = state.context
+
+  // Fetch available folders on mount for new specs
+  useEffect(() => {
+    if (isNew) {
+      getContractFolders()
+        .then(setFolders)
+        .catch(() => setFolders(['/']))
+    }
+  }, [isNew])
 
   // Keyboard shortcut: Cmd/Ctrl + S to save
   useKeyboardShortcut({
@@ -179,14 +196,19 @@ export function EditorWizard({
   }, [])
 
   const handleSaveSuccess = useCallback(
-    (result: SaveResult) => {
+    async (result: SaveResult) => {
+      // Delete the import token from IndexedDB after successful save
+      if (importToken) {
+        await deleteImportedSpec(importToken)
+      }
+
       // Navigate to the saved contract
       const targetPath = result.filePath || filePath
       if (targetPath) {
         router.push(`/contracts/${targetPath}`)
       }
     },
-    [router, filePath]
+    [router, filePath, importToken]
   )
 
   // Handle completion
@@ -238,6 +260,8 @@ export function EditorWizard({
         onSaveSuccess={handleSaveSuccess}
         isNew={isNew}
         originalContent={isNew ? undefined : initialYaml}
+        folders={folders}
+        suggestedFileName={suggestedFileName}
       />
 
       {/* Section Navigation */}

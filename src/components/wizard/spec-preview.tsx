@@ -1,12 +1,11 @@
 'use client'
 
-import { AlertCircle, Check, CheckCircle, Copy, Download, Edit, Save, Wand2 } from 'lucide-react'
+import { AlertCircle, Check, CheckCircle, Copy, Download, ExternalLink, Wand2 } from 'lucide-react'
 import { useCallback, useState } from 'react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Textarea } from '@/components/ui/textarea'
 
 interface SpecPreviewProps {
   /** Generated OpenAPI YAML */
@@ -19,12 +18,10 @@ interface SpecPreviewProps {
   model?: string
   /** Processing time in ms */
   processingTimeMs?: number
-  /** Callback when spec is edited */
-  onEdit?: (yaml: string) => void
-  /** Callback when save is triggered */
-  onSave?: () => void
   /** Callback when refinement is triggered */
   onRefine?: () => void
+  /** Callback when "Open in Editor" is triggered */
+  onOpenEditor?: () => void
   /** Whether refinement is in progress */
   isRefining?: boolean
   /** Whether actions are disabled */
@@ -37,15 +34,12 @@ export function SpecPreview({
   isValid,
   model,
   processingTimeMs,
-  onEdit,
-  onSave,
   onRefine,
+  onOpenEditor,
   isRefining = false,
   disabled = false,
 }: SpecPreviewProps) {
   const [copied, setCopied] = useState(false)
-  const [isEditing, setIsEditing] = useState(false)
-  const [editedYaml, setEditedYaml] = useState(yaml)
 
   const handleCopy = useCallback(async () => {
     await navigator.clipboard.writeText(yaml)
@@ -64,17 +58,6 @@ export function SpecPreview({
     document.body.removeChild(a)
     URL.revokeObjectURL(url)
   }, [yaml])
-
-  const handleEditToggle = useCallback(() => {
-    if (isEditing && editedYaml !== yaml) {
-      onEdit?.(editedYaml)
-    }
-    setIsEditing(!isEditing)
-  }, [isEditing, editedYaml, yaml, onEdit])
-
-  const handleEditChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setEditedYaml(e.target.value)
-  }, [])
 
   // Count lines for line numbers
   const lineCount = yaml.split('\n').length
@@ -138,43 +121,30 @@ export function SpecPreview({
               <Download className="mr-2 h-4 w-4" />
               Download
             </Button>
-            <Button variant="outline" size="sm" onClick={handleEditToggle} disabled={disabled}>
-              <Edit className="mr-2 h-4 w-4" />
-              {isEditing ? 'Done' : 'Edit'}
-            </Button>
           </div>
         </CardHeader>
         <CardContent>
-          {isEditing ? (
-            <Textarea
-              value={editedYaml}
-              onChange={handleEditChange}
-              className="min-h-[400px] font-mono text-sm"
-              disabled={disabled}
-            />
-          ) : (
-            <div className="max-h-[400px] overflow-auto rounded-lg bg-muted p-4">
-              <pre className="font-mono text-sm">
-                <code>{yaml}</code>
-              </pre>
-            </div>
-          )}
+          <div className="max-h-[400px] overflow-auto rounded-lg bg-muted p-4">
+            <pre className="font-mono text-sm">
+              <code>{yaml}</code>
+            </pre>
+          </div>
         </CardContent>
       </Card>
 
-      {/* Save Section */}
-      {onSave && (
+      {/* Open in Editor Section */}
+      {onOpenEditor && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Save Specification</CardTitle>
+            <CardTitle className="text-base">Continue Editing</CardTitle>
             <CardDescription>
-              Save this contract to the repository or submit it for review
+              Open the full editor to refine your specification with section-by-section navigation
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button onClick={onSave} disabled={disabled || !isValid}>
-              <Save className="mr-2 h-4 w-4" />
-              Save Contract
+            <Button onClick={onOpenEditor} disabled={disabled}>
+              <ExternalLink className="mr-2 h-4 w-4" />
+              Open in Editor
             </Button>
           </CardContent>
         </Card>

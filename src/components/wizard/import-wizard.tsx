@@ -5,10 +5,9 @@ import { ArrowLeft } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
-import { getContractFolders, type SaveResult } from '@/actions/contracts'
-import { SaveDialog } from '@/components/contracts'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { storeImportedSpec } from '@/lib/import-db'
 import {
   getStepName,
   getStepNumber,
@@ -23,16 +22,7 @@ export function ImportWizard() {
   const router = useRouter()
   const [state, send] = useMachine(importWizardMachine)
   const [elapsedTime, setElapsedTime] = useState(0)
-  const [saveDialogOpen, setSaveDialogOpen] = useState(false)
-  const [folders, setFolders] = useState<string[]>(['/'])
   const processingStartTimeRef = useRef<number | null>(null)
-
-  // Fetch available folders on mount
-  useEffect(() => {
-    getContractFolders()
-      .then(setFolders)
-      .catch(() => setFolders(['/']))
-  }, [])
 
   // Track elapsed time during processing, validating, and refining
   const isProcessing =
@@ -73,13 +63,13 @@ export function ImportWizard() {
         // After refining, show different message based on result
         toast.success(state.context.isValid ? 'Spec fixed successfully' : 'Refinement complete', {
           description: state.context.isValid
-            ? 'Your specification is now valid and ready to save'
-            : 'Some issues remain - you can try again or edit manually',
+            ? 'Your specification is now valid and ready to edit'
+            : 'Some issues remain - you can try again or fix in the editor',
         })
       } else {
         toast.success('OpenAPI spec generated', {
           description: state.context.isValid
-            ? 'Your specification is valid and ready to save'
+            ? 'Your specification is valid and ready to edit'
             : 'Generated with validation warnings - please review',
         })
       }
@@ -122,26 +112,16 @@ export function ImportWizard() {
     send({ type: 'BACK' })
   }, [send])
 
-  const handleEditSpec = useCallback(
-    (yaml: string) => {
-      send({ type: 'EDIT_SPEC', yaml })
-    },
-    [send]
-  )
+  const handleOpenEditor = useCallback(async () => {
+    // Store the generated YAML in IndexedDB and get a token
+    const token = await storeImportedSpec(
+      state.context.generatedYaml,
+      state.context.suggestedFileName
+    )
 
-  const handleSave = useCallback(() => {
-    setSaveDialogOpen(true)
-  }, [])
-
-  const handleSaveSuccess = useCallback(
-    (result: SaveResult) => {
-      const targetPath = result.filePath || state.context.targetPath
-      if (targetPath) {
-        router.push(`/contracts/${encodeURIComponent(targetPath)}`)
-      }
-    },
-    [router, state.context.targetPath]
-  )
+    // Navigate to the new contract editor with the token
+    router.push(`/edit/new?token=${token}`)
+  }, [router, state.context.generatedYaml, state.context.suggestedFileName])
 
   const handleRetry = useCallback(() => {
     send({ type: 'RETRY' })
@@ -150,7 +130,7 @@ export function ImportWizard() {
   const handleRefine = useCallback(() => {
     if (state.context.refineAttempts >= 3) {
       toast.warning('Multiple refinement attempts', {
-        description: 'Consider editing the spec manually if issues persist.',
+        description: 'Consider fixing the spec manually in the editor.',
       })
     }
     send({ type: 'REFINE' })
@@ -167,7 +147,7 @@ export function ImportWizard() {
     state.matches('inputContent') &&
     (state.context.file !== null || state.context.textContent.trim().length > 0)
 
-  const canGoBack = state.matches('preview') || state.matches('editing') || state.matches('error')
+  const canGoBack = state.matches('preview') || state.matches('error')
 
   // Determine processing stage for indicator
   const getProcessingStage = (): 'parsing' | 'analyzing' | 'generating' | 'validating' => {
@@ -178,156 +158,132 @@ export function ImportWizard() {
   }
 
   return (
-    <>
-      {/* Save Dialog */}
-      <SaveDialog
-        open={saveDialogOpen}
-        onOpenChange={setSaveDialogOpen}
-        content={state.context.generatedYaml}
-        onSaveSuccess={handleSaveSuccess}
-        isNew={true}
-        folders={folders}
-        suggestedFileName={state.context.suggestedFileName}
-      />
-
-      <div className="w-full flex justify-center">
-        <div className="w-full max-w-5xl space-y-6">
-          {/* Header with progress */}
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold">Import API Description</h1>
-              <p className="text-muted-foreground">
-                Convert your API documentation to OpenAPI specification
-              </p>
-            </div>
-            {stepNumber > 0 && (
-              <div className="text-sm text-muted-foreground">
-                Step {stepNumber} of {totalSteps}: {stepName}
-              </div>
-            )}
+    <div className="w-full flex justify-center">
+      <div className="w-full max-w-5xl space-y-6">
+        {/* Header with progress */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold">Import API Description</h1>
+            <p className="text-muted-foreground">
+              Convert your API documentation to OpenAPI specification
+            </p>
           </div>
-
-          {/* Main content based on state */}
-          <Card>
-            <CardContent className="p-6">
-              {/* Input - Unified 2-column layout */}
-              {state.matches('inputContent') && (
-                <UnifiedInput
-                  textContent={state.context.textContent}
-                  onTextChange={handleTextChange}
-                  selectedFile={state.context.file}
-                  onFileSelect={handleFileSelect}
-                  onFileClear={handleFileClear}
-                  onProcess={handleProcess}
-                  canProcess={canProcess}
-                />
-              )}
-
-              {/* Processing (with streaming preview) */}
-              {state.matches('processing') && (
-                <ProcessingIndicator
-                  stage={getProcessingStage()}
-                  elapsedMs={elapsedTime}
-                  streamingYaml={state.context.streamingYaml}
-                />
-              )}
-
-              {/* Validating */}
-              {state.matches('validating') && (
-                <ProcessingIndicator
-                  stage="validating"
-                  elapsedMs={elapsedTime}
-                  streamingYaml={state.context.streamingYaml}
-                />
-              )}
-
-              {/* Refining */}
-              {state.matches('refining') && (
-                <ProcessingIndicator
-                  stage="generating"
-                  elapsedMs={elapsedTime}
-                  streamingYaml={state.context.streamingYaml}
-                />
-              )}
-
-              {/* Preview / Editing */}
-              {(state.matches('preview') || state.matches('editing')) && (
-                <SpecPreview
-                  yaml={state.context.generatedYaml}
-                  errors={state.context.errors}
-                  isValid={state.context.isValid}
-                  model={state.context.model}
-                  processingTimeMs={state.context.processingTimeMs}
-                  onEdit={handleEditSpec}
-                  onSave={handleSave}
-                  onRefine={handleRefine}
-                  isRefining={state.matches('refining')}
-                  disabled={saveDialogOpen}
-                />
-              )}
-
-              {/* Saving */}
-              {state.matches('saving') && (
-                <div className="flex flex-col items-center justify-center py-12">
-                  <ProcessingIndicator stage="validating" isComplete={false} />
-                  <p className="mt-4 text-muted-foreground">Saving contract...</p>
-                </div>
-              )}
-
-              {/* Error */}
-              {state.matches('error') && (
-                <div className="space-y-6 text-center">
-                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10">
-                    <span className="text-4xl">!</span>
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-semibold text-destructive">Processing Failed</h2>
-                    <p className="mt-2 text-muted-foreground">{state.context.errorMessage}</p>
-                  </div>
-                  <div className="flex justify-center gap-4">
-                    <Button variant="outline" onClick={handleBack}>
-                      Go Back
-                    </Button>
-                    <Button onClick={handleRetry}>Retry</Button>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Navigation buttons */}
-          {!state.matches('processing') &&
-            !state.matches('validating') &&
-            !state.matches('refining') &&
-            !state.matches('saving') &&
-            !state.matches('error') &&
-            !state.matches('inputContent') && (
-              <div className="flex justify-between">
-                <Button variant="outline" onClick={handleBack} disabled={!canGoBack}>
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back
-                </Button>
-
-                <div className="flex gap-2">
-                  {(state.matches('preview') || state.matches('editing')) && (
-                    <Button variant="outline" onClick={handleRetry}>
-                      Regenerate
-                    </Button>
-                  )}
-                </div>
-              </div>
-            )}
-
-          {/* Cancel button on input screen */}
-          {state.matches('inputContent') && (
-            <div className="flex justify-start">
-              <Button variant="outline" onClick={() => router.push('/contracts')}>
-                Cancel
-              </Button>
+          {stepNumber > 0 && (
+            <div className="text-sm text-muted-foreground">
+              Step {stepNumber} of {totalSteps}: {stepName}
             </div>
           )}
         </div>
+
+        {/* Main content based on state */}
+        <Card>
+          <CardContent className="p-6">
+            {/* Input - Unified 2-column layout */}
+            {state.matches('inputContent') && (
+              <UnifiedInput
+                textContent={state.context.textContent}
+                onTextChange={handleTextChange}
+                selectedFile={state.context.file}
+                onFileSelect={handleFileSelect}
+                onFileClear={handleFileClear}
+                onProcess={handleProcess}
+                canProcess={canProcess}
+              />
+            )}
+
+            {/* Processing (with streaming preview) */}
+            {state.matches('processing') && (
+              <ProcessingIndicator
+                stage={getProcessingStage()}
+                elapsedMs={elapsedTime}
+                streamingYaml={state.context.streamingYaml}
+              />
+            )}
+
+            {/* Validating */}
+            {state.matches('validating') && (
+              <ProcessingIndicator
+                stage="validating"
+                elapsedMs={elapsedTime}
+                streamingYaml={state.context.streamingYaml}
+              />
+            )}
+
+            {/* Refining */}
+            {state.matches('refining') && (
+              <ProcessingIndicator
+                stage="generating"
+                elapsedMs={elapsedTime}
+                streamingYaml={state.context.streamingYaml}
+              />
+            )}
+
+            {/* Preview */}
+            {state.matches('preview') && (
+              <SpecPreview
+                yaml={state.context.generatedYaml}
+                errors={state.context.errors}
+                isValid={state.context.isValid}
+                model={state.context.model}
+                processingTimeMs={state.context.processingTimeMs}
+                onRefine={handleRefine}
+                onOpenEditor={handleOpenEditor}
+                isRefining={false}
+              />
+            )}
+
+            {/* Error */}
+            {state.matches('error') && (
+              <div className="space-y-6 text-center">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10">
+                  <span className="text-4xl">!</span>
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold text-destructive">Processing Failed</h2>
+                  <p className="mt-2 text-muted-foreground">{state.context.errorMessage}</p>
+                </div>
+                <div className="flex justify-center gap-4">
+                  <Button variant="outline" onClick={handleBack}>
+                    Go Back
+                  </Button>
+                  <Button onClick={handleRetry}>Retry</Button>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Navigation buttons */}
+        {!state.matches('processing') &&
+          !state.matches('validating') &&
+          !state.matches('refining') &&
+          !state.matches('error') &&
+          !state.matches('inputContent') && (
+            <div className="flex justify-between">
+              <Button variant="outline" onClick={handleBack} disabled={!canGoBack}>
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back
+              </Button>
+
+              <div className="flex gap-2">
+                {state.matches('preview') && (
+                  <Button variant="outline" onClick={handleRetry}>
+                    Regenerate
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+
+        {/* Cancel button on input screen */}
+        {state.matches('inputContent') && (
+          <div className="flex justify-start">
+            <Button variant="outline" onClick={() => router.push('/contracts')}>
+              Cancel
+            </Button>
+          </div>
+        )}
       </div>
-    </>
+    </div>
   )
 }
